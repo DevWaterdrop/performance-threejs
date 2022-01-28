@@ -1,5 +1,6 @@
 <script>
 	import '../app.css';
+	import '../apply.css';
 </script>
 
 <svelte:head>
