@@ -1,2 +1,7 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<svelte:head>
+	<title>Performance Threejs</title>
+</svelte:head>
+
+<div class="flex flex-col p-8">
+	<h1 class="text-3xl">Greetings</h1>
+</div>
