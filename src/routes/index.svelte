@@ -8,11 +8,16 @@
 
 <div class="flex flex-col p-8 dark:text-white">
 	<Nav />
-	<div class="flex divide-x">
-		<div class="w-2/5 flex">
-			<h2 class="text-lg">Preview</h2>
+	<div class="flex">
+		<div class="relative w-2/5 flex flex-col">
+			<img
+				class="w-full object-contain"
+				src="images/unsplash_image_smaller_80.jpg"
+				alt="author - Sascha Bosshard, source: unsplash.com"
+			/>
 		</div>
-		<div class="w-3/5 flex flex-col gap-2 p-4">
+		<div class="w-px mx-4 bg-black dark:bg-white" />
+		<div class="w-3/5 flex flex-col gap-2">
 			<div class="flex flex-col">
 				<label for="effect">Effect</label>
 				<input type="range" name="effect" />
