@@ -26,7 +26,7 @@
 {#if isImgLoaded}
 	<Preview images={[img]} {previewSettings} />
 {/if}
-<div class="flex flex-col p-8 dark:text-white">
+<div class="flex flex-col p-8 min-h-screen dark:text-white">
 	<Nav />
 	<div class="flex">
 		<div class="relative w-2/5 flex flex-col">
@@ -42,7 +42,7 @@
 			<div class="flex flex-col">
 				<label for="glitch">Glitch</label>
 				<button
-					class="max-w-max border px-2 border-black hover:bg-black hover:text-white transition"
+					class="max-w-max border px-2 transition border-black hover:bg-black hover:text-white dark:text-white dark:border-white dark:hover:bg-white dark:hover:text-black"
 					on:click={() => {
 						previewSettings.glitch.enable = !previewSettings.glitch.enable;
 					}}>Enable</button
