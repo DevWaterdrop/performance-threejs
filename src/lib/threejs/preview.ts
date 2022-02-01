@@ -3,13 +3,13 @@ import vertex from '$lib/threejs/shaders/vertex.glsl?raw';
 import fragment from '$lib/threejs/shaders/fragment.glsl?raw';
 
 interface Props {
-	canvas: HTMLCanvasElement;
+	container: HTMLDivElement;
 	images: HTMLImageElement[];
 	previewSettings: PreviewSettings;
 }
 
 type MeshImage = {
-	img: HTMLImageElement;
+	element: HTMLImageElement;
 	mesh: THREE.Mesh;
 	top: number;
 	left: number;
@@ -18,7 +18,7 @@ type MeshImage = {
 };
 
 export default class ThreePreview {
-	readonly canvas: HTMLCanvasElement;
+	readonly container: HTMLDivElement;
 	readonly images: HTMLImageElement[];
 	previewSettings: PreviewSettings;
 
@@ -32,7 +32,7 @@ export default class ThreePreview {
 	private currentScroll: number;
 
 	constructor(options: Props) {
-		this.canvas = options.canvas;
+		this.container = options.container;
 		this.images = options.images;
 		this.previewSettings = options.previewSettings;
 
@@ -40,8 +40,8 @@ export default class ThreePreview {
 		this.time = 0;
 
 		this.dimensions = {
-			width: this.canvas.offsetWidth,
-			height: this.canvas.offsetHeight
+			width: this.container.offsetWidth,
+			height: this.container.offsetHeight
 		};
 
 		this.scene = new THREE.Scene();
@@ -54,16 +54,16 @@ export default class ThreePreview {
 		this.camera.position.z = 600;
 		this.camera.fov = 2 * Math.atan(this.dimensions.height / 2 / 600) * (180 / Math.PI);
 
-		this.renderer = new THREE.WebGLRenderer({
-			alpha: true,
-			canvas: this.canvas
-		});
+		this.renderer = new THREE.WebGLRenderer({ alpha: true });
 		this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2.5));
+		this.container.appendChild(this.renderer.domElement);
 
 		//* Image zone
 		this.materials = [];
 		this.meshImages = [];
-		this.addImage(this.images[0]);
+		this.images.forEach((image) => {
+			this.addImage(image);
+		});
 		//* -- end of Image zone
 
 		//* Init
@@ -72,6 +72,7 @@ export default class ThreePreview {
 
 		this.setupScroll();
 		this.setupResize();
+
 		this.render();
 	}
 
@@ -85,27 +86,37 @@ export default class ThreePreview {
 
 	private scroll() {
 		this.currentScroll = window.scrollY || document.documentElement.scrollTop;
+
+		this.setImagesPosition();
 	}
 
 	private resize() {
 		this.dimensions = {
-			width: this.canvas.offsetWidth,
-			height: this.canvas.offsetHeight
+			width: this.container.offsetWidth,
+			height: this.container.offsetHeight
 		};
 
-		this.renderer.setSize(this.dimensions.width, this.dimensions.height);
 		this.camera.aspect = this.dimensions.width / this.dimensions.height;
+		this.camera.fov = 2 * Math.atan(this.dimensions.height / 2 / 600) * (180 / Math.PI);
 		this.camera.updateProjectionMatrix();
+		this.renderer.setSize(this.dimensions.width, this.dimensions.height);
+
+		this.setImagesPosition();
 	}
 
 	private render() {
 		this.time += 0.5;
 
-		this.setImagesPosition();
 		this.setUniforms();
 
 		this.renderer.render(this.scene, this.camera);
 		window.requestAnimationFrame(this.render.bind(this));
+	}
+
+	cleanUp() {
+		// TODO WIP
+		window.removeEventListener('resize', this.resize.bind(this));
+		window.removeEventListener('scroll', this.scroll.bind(this));
 	}
 
 	//* IMAGES
@@ -120,9 +131,13 @@ export default class ThreePreview {
 
 	private setImagesPosition() {
 		this.meshImages.forEach((img) => {
-			img.mesh.position.y =
-				this.currentScroll - img.top + this.dimensions.height / 2 - img.height / 2;
-			img.mesh.position.x = img.left - this.dimensions.width / 2 + img.width / 2;
+			const { width, height, top, left } = img.element.getBoundingClientRect();
+
+			// ? Perhaps there is a better option 💁‍♂️
+			img.mesh.geometry = new THREE.PlaneBufferGeometry(width, height);
+
+			img.mesh.position.y = -this.currentScroll - top + this.dimensions.height / 2 - height / 2;
+			img.mesh.position.x = left - this.dimensions.width / 2 + width / 2;
 		});
 	}
 
@@ -150,7 +165,9 @@ export default class ThreePreview {
 		const mesh = new THREE.Mesh(geometry, material);
 
 		this.materials.push(material);
-		this.meshImages.push({ img: image, mesh, top, left, width, height });
+		this.meshImages.push({ element: image, mesh, top, left, width, height });
+
+		this.setImagesPosition();
 
 		this.scene.add(mesh);
 	}

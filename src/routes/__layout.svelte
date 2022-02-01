@@ -10,6 +10,6 @@
 	/>
 </svelte:head>
 
-<main>
+<main class="relative">
 	<slot />
 </main>
