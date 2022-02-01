@@ -5,6 +5,7 @@ import fragment from '$lib/threejs/shaders/fragment.glsl?raw';
 interface Props {
 	canvas: HTMLCanvasElement;
 	images: HTMLImageElement[];
+	previewSettings: PreviewSettings;
 }
 
 type MeshImage = {
@@ -18,8 +19,10 @@ type MeshImage = {
 
 export default class ThreePreview {
 	readonly canvas: HTMLCanvasElement;
+	readonly images: HTMLImageElement[];
+	previewSettings: PreviewSettings;
 
-	private images: HTMLImageElement[];
+	private time: number;
 	private dimensions: { width: number; height: number };
 	private scene: THREE.Scene;
 	private camera: THREE.PerspectiveCamera;
@@ -31,8 +34,10 @@ export default class ThreePreview {
 	constructor(options: Props) {
 		this.canvas = options.canvas;
 		this.images = options.images;
+		this.previewSettings = options.previewSettings;
 
 		this.currentScroll = 0;
+		this.time = 0;
 
 		this.dimensions = {
 			width: this.canvas.offsetWidth,
@@ -94,13 +99,25 @@ export default class ThreePreview {
 	}
 
 	private render() {
+		this.time += 0.5;
+
 		this.setImagesPosition();
+		this.setUniforms();
 
 		this.renderer.render(this.scene, this.camera);
 		window.requestAnimationFrame(this.render.bind(this));
 	}
 
 	//* IMAGES
+	private setUniforms() {
+		for (const material of this.materials) {
+			const { glitch } = this.previewSettings;
+
+			material.uniforms.u_time.value = this.time;
+			material.uniforms.u_glitch.value = glitch;
+		}
+	}
+
 	private setImagesPosition() {
 		this.meshImages.forEach((img) => {
 			img.mesh.position.y =
@@ -110,8 +127,14 @@ export default class ThreePreview {
 	}
 
 	private async addImage(image: HTMLImageElement) {
+		const { glitch } = this.previewSettings;
+
 		const baseMaterial = new THREE.ShaderMaterial({
-			uniforms: { uImage: { value: 0 } },
+			uniforms: {
+				uImage: { value: 0 },
+				u_time: { value: 0 },
+				u_glitch: { value: glitch }
+			},
 			fragmentShader: fragment,
 			vertexShader: vertex
 		});

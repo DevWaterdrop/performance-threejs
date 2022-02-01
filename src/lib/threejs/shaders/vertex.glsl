@@ -1,3 +1,7 @@
+// Uniform
+uniform float u_time;
+
+// Varying
 varying vec2 vUv;
 
 void main() {

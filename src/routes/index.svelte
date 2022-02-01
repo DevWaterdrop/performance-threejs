@@ -5,6 +5,14 @@
 
 	let img: HTMLImageElement;
 	let isImgLoaded = false;
+	let previewSettings: PreviewSettings = {
+		glitch: {
+			enable: false,
+			noiseIntensity: 0.01,
+			offsetIntensity: 0.02,
+			colorOffsetIntensity: 1.5
+		}
+	};
 
 	$: if (img && img.complete) {
 		isImgLoaded = true;
@@ -16,7 +24,7 @@
 </svelte:head>
 
 {#if isImgLoaded}
-	<Preview images={[img]} />
+	<Preview images={[img]} {previewSettings} />
 {/if}
 <div class="flex flex-col p-8 dark:text-white">
 	<Nav />
@@ -32,8 +40,37 @@
 		<div class="w-px mx-4 bg-black dark:bg-white" />
 		<div class="w-3/5 flex flex-col gap-2">
 			<div class="flex flex-col">
-				<label for="effect">Effect</label>
-				<input type="range" name="effect" />
+				<label for="glitch">Glitch</label>
+				<button
+					class="max-w-max border px-2 border-black hover:bg-black hover:text-white transition"
+					on:click={() => {
+						previewSettings.glitch.enable = !previewSettings.glitch.enable;
+					}}>Enable</button
+				>
+				<input
+					type="range"
+					min={0}
+					max={0.1}
+					name="glitch"
+					step={0.001}
+					bind:value={previewSettings.glitch.noiseIntensity}
+				/>
+				<input
+					type="range"
+					min={0}
+					max={0.1}
+					name="glitch"
+					step={0.001}
+					bind:value={previewSettings.glitch.offsetIntensity}
+				/>
+				<input
+					type="range"
+					min={0.1}
+					max={5}
+					name="glitch"
+					step={0.001}
+					bind:value={previewSettings.glitch.colorOffsetIntensity}
+				/>
 				<span class="text-xs">Description</span>
 			</div>
 		</div>
