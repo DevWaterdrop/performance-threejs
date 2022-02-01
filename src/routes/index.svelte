@@ -2,6 +2,7 @@
 	import Footer from '$lib/components/Footer/Footer.svelte';
 	import Nav from '$lib/components/Nav/Nav.svelte';
 	import Preview from '$lib/components/Preview/Preview.svelte';
+	import { onMount } from 'svelte';
 
 	let img: HTMLImageElement;
 	let isImgLoaded = false;
@@ -14,9 +15,10 @@
 		}
 	};
 
-	$: if (img && img.complete) {
-		isImgLoaded = true;
-	}
+	onMount(() => {
+		if (img.complete) isImgLoaded = true;
+		img.onload = () => (isImgLoaded = true);
+	});
 </script>
 
 <svelte:head>
