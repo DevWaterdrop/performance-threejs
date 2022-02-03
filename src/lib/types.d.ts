@@ -1,4 +1,4 @@
-interface PreviewSettings {
+export interface PreviewSettings {
 	glitch: {
 		enable: boolean;
 		noiseIntensity: number;

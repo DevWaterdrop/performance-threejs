@@ -1,3 +1,4 @@
+import type { PreviewSettings } from '$lib/types';
 import * as THREE from 'three';
 import vertex from '$lib/threejs/shaders/vertex.glsl?raw';
 import fragment from '$lib/threejs/shaders/fragment.glsl?raw';

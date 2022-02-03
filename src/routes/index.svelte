@@ -1,9 +1,10 @@
 <script lang="ts">
+	import type { PreviewSettings } from '$lib/types';
+	import { onMount } from 'svelte';
 	import Button from '$lib/components/Button/Button.svelte';
 	import Footer from '$lib/components/Footer/Footer.svelte';
 	import Nav from '$lib/components/Nav/Nav.svelte';
 	import Preview from '$lib/components/Preview/Preview.svelte';
-	import { onMount } from 'svelte';
 
 	let img: HTMLImageElement;
 	let isImgLoaded = false;

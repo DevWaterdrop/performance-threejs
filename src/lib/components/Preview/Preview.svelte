@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { PreviewSettings } from '$lib/types';
 	import { onMount } from 'svelte';
 	import ThreePreview from '$lib/threejs/preview';
 
