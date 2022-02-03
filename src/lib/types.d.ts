@@ -5,4 +5,7 @@ interface PreviewSettings {
 		offsetIntensity: number;
 		colorOffsetIntensity: number;
 	};
+	waveClick: {
+		enable: boolean;
+	};
 }

@@ -6,13 +6,19 @@ struct Glitch {
 	float colorOffsetIntensity;
 };
 
+struct WaveClick {
+	bool enable;
+};
+
 // Uniform
-uniform sampler2D uImage;
+uniform sampler2D u_image;
 uniform float u_time;
 uniform Glitch u_glitch;
+uniform WaveClick u_waveClick;
 
 // Varying
 varying vec2 vUv;
+varying float vNoise;
 
 // Const
 const float range = 0.05;
@@ -31,7 +37,6 @@ float verticalBar(float pos, float uvY, float offset){
 	x -= smoothstep(pos, edge1, uvY) * offset;
 	return x;
 }
-
 
 vec4 glitch(vec2 newUV){
 	vec2 uv = newUV.xy;
@@ -53,9 +58,9 @@ vec4 glitch(vec2 newUV){
 	vec2 offsetR = vec2(0.006 * sin(u_time), 0.0) * u_glitch.colorOffsetIntensity;
 	vec2 offsetG = vec2(0.0073 * (cos(u_time * 0.97)), 0.0) * u_glitch.colorOffsetIntensity;
 
-	float r = texture(uImage, uv + offsetR).r;
-	float g = texture(uImage, uv + offsetG).g;
-	float b = texture(uImage, uv).b;
+	float r = texture(u_image, uv + offsetR).r;
+	float g = texture(u_image, uv + offsetG).g;
+	float b = texture(u_image, uv).b;
 
 	vec4 tex = vec4(r, g, b, 1.0);
 
@@ -63,16 +68,18 @@ vec4 glitch(vec2 newUV){
 }
 // --- end of Glitch ---
 
-
 void main()	{
 	vec2 newUV = vUv;
-	vec4 image = texture2D(uImage,newUV);
+	vec4 image = texture2D(u_image,newUV);
+
+	gl_FragColor = image;
 
 	if(u_glitch.enable) {
 		gl_FragColor = glitch(newUV);
-		return;
 	}
 
-	gl_FragColor = image;
+	if(u_waveClick.enable) {
+  	gl_FragColor.rgb += 0.05*vec3(vNoise);
+	}
 }
 

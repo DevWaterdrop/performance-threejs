@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import vertex from '$lib/threejs/shaders/vertex.glsl?raw';
 import fragment from '$lib/threejs/shaders/fragment.glsl?raw';
+import anime from 'animejs';
 
 interface Props {
 	container: HTMLDivElement;
@@ -15,6 +16,7 @@ type MeshImage = {
 	left: number;
 	width: number;
 	height: number;
+	material: THREE.ShaderMaterial;
 };
 
 export default class ThreePreview {
@@ -30,6 +32,7 @@ export default class ThreePreview {
 	private materials: THREE.ShaderMaterial[];
 	private meshImages: MeshImage[];
 	private currentScroll: number;
+	private raycaster: THREE.Raycaster;
 
 	constructor(options: Props) {
 		this.container = options.container;
@@ -57,6 +60,8 @@ export default class ThreePreview {
 		this.renderer = new THREE.WebGLRenderer({ alpha: true });
 		this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2.5));
 		this.container.appendChild(this.renderer.domElement);
+
+		this.raycaster = new THREE.Raycaster();
 
 		//* Image zone
 		this.materials = [];
@@ -117,6 +122,9 @@ export default class ThreePreview {
 		// TODO WIP
 		window.removeEventListener('resize', this.resize.bind(this));
 		window.removeEventListener('scroll', this.scroll.bind(this));
+		this.meshImages.forEach(({ element }) => {
+			element.removeEventListener('click', this.addImage.bind(this));
+		});
 	}
 
 	//* IMAGES
@@ -134,21 +142,50 @@ export default class ThreePreview {
 			const { width, height, top, left } = img.element.getBoundingClientRect();
 
 			// ? Perhaps there is a better option 💁‍♂️
-			img.mesh.geometry = new THREE.PlaneBufferGeometry(width, height);
+			img.mesh.geometry = new THREE.PlaneBufferGeometry(width, height, 100, 100);
 
 			img.mesh.position.y = -this.currentScroll - top + this.dimensions.height / 2 - height / 2;
 			img.mesh.position.x = left - this.dimensions.width / 2 + width / 2;
 		});
 	}
 
+	private clickEvent(event: MouseEvent) {
+		const mouse = new THREE.Vector2();
+		mouse.x = (event.clientX / this.dimensions.width) * 2 - 1;
+		mouse.y = -(event.clientY / this.dimensions.height) * 2 + 1;
+
+		this.raycaster.setFromCamera(mouse, this.camera);
+		const intersects = this.raycaster.intersectObjects(this.scene.children);
+
+		if (intersects.length > 0) {
+			const imageIndex = this.meshImages.findIndex(
+				(image) => image.element === event.currentTarget
+			);
+			if (imageIndex === -1) return;
+
+			const { material } = this.meshImages[imageIndex];
+
+			material.uniforms.u_clickPosition.value = intersects[0].uv;
+
+			anime({
+				targets: material.uniforms.u_click,
+				easing: 'easeOutQuart',
+				value: [1, 0]
+			});
+		}
+	}
+
 	private async addImage(image: HTMLImageElement) {
-		const { glitch } = this.previewSettings;
+		const { glitch, waveClick } = this.previewSettings;
 
 		const baseMaterial = new THREE.ShaderMaterial({
 			uniforms: {
-				uImage: { value: 0 },
+				u_image: { value: 0 },
 				u_time: { value: 0 },
-				u_glitch: { value: glitch }
+				u_click: { value: 0 },
+				u_clickPosition: { value: new THREE.Vector2(0.5, 0.5) }, // Center of Image
+				u_glitch: { value: glitch },
+				u_waveClick: { value: waveClick }
 			},
 			fragmentShader: fragment,
 			vertexShader: vertex
@@ -156,16 +193,20 @@ export default class ThreePreview {
 
 		const { top, left, width, height } = image.getBoundingClientRect();
 
-		const geometry = new THREE.PlaneBufferGeometry(width, height);
+		const geometry = new THREE.PlaneBufferGeometry(width, height, 100, 100);
 		const texture = await new THREE.TextureLoader().loadAsync(image['src']);
 
 		const material = baseMaterial.clone();
-		material.uniforms.uImage.value = texture;
+		material.uniforms.u_image.value = texture;
 
 		const mesh = new THREE.Mesh(geometry, material);
 
+		// Events
+		image.addEventListener('click', this.clickEvent.bind(this));
+		// --- end of Events
+
 		this.materials.push(material);
-		this.meshImages.push({ element: image, mesh, top, left, width, height });
+		this.meshImages.push({ element: image, mesh, top, left, width, height, material });
 
 		this.setImagesPosition();
 

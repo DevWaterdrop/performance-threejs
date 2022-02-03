@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Button from '$lib/components/Button/Button.svelte';
 	import Footer from '$lib/components/Footer/Footer.svelte';
 	import Nav from '$lib/components/Nav/Nav.svelte';
 	import Preview from '$lib/components/Preview/Preview.svelte';
@@ -12,6 +13,9 @@
 			noiseIntensity: 0.01,
 			offsetIntensity: 0.02,
 			colorOffsetIntensity: 1.5
+		},
+		waveClick: {
+			enable: false
 		}
 	};
 
@@ -42,12 +46,21 @@
 		<div class="w-px mx-4 bg-black dark:bg-white" />
 		<div class="w-3/5 flex flex-col gap-2">
 			<div class="flex flex-col">
+				<label for="glitch">Wave [Click]</label>
+				<Button
+					enabled={previewSettings.waveClick.enable}
+					handler={() => {
+						previewSettings.waveClick.enable = !previewSettings.waveClick.enable;
+					}}>Enable</Button
+				>
+			</div>
+			<div class="flex flex-col">
 				<label for="glitch">Glitch</label>
-				<button
-					class="max-w-max border px-2 transition border-black hover:bg-black hover:text-white dark:text-white dark:border-white dark:hover:bg-white dark:hover:text-black"
-					on:click={() => {
+				<Button
+					enabled={previewSettings.glitch.enable}
+					handler={() => {
 						previewSettings.glitch.enable = !previewSettings.glitch.enable;
-					}}>Enable</button
+					}}>Enable</Button
 				>
 				<input
 					type="range"
