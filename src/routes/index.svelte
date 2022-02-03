@@ -46,7 +46,7 @@
 		<div class="w-px mx-4 bg-black dark:bg-white" />
 		<div class="w-3/5 flex flex-col gap-2">
 			<div class="flex flex-col">
-				<label for="glitch">Wave [Click]</label>
+				<label for="waveClick">Wave [Click]</label>
 				<Button
 					enabled={previewSettings.waveClick.enable}
 					handler={() => {
