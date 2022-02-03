@@ -113,6 +113,7 @@ export default class ThreePreview {
 	private render() {
 		this.time += 0.5;
 
+		// ? Maybe set uniforms only if at least one effect is enabled from previewSettings 🧐
 		this.setUniforms();
 
 		this.renderer.render(this.scene, this.camera);
@@ -131,10 +132,11 @@ export default class ThreePreview {
 	//* IMAGES
 	private setUniforms() {
 		for (const material of this.materials) {
-			const { glitch } = this.previewSettings;
+			const { glitch, waveClick } = this.previewSettings;
 
 			material.uniforms.u_time.value = this.time;
 			material.uniforms.u_glitch.value = glitch;
+			material.uniforms.u_waveClick.value = waveClick;
 		}
 	}
 
