@@ -93,7 +93,8 @@ export default class ThreePreview {
 	private scroll() {
 		this.currentScroll = window.scrollY || document.documentElement.scrollTop;
 
-		this.setImagesPosition();
+		//? Currently removed for better performance, it seems there is no need, and there are no bugs
+		// this.setImagesPosition();
 	}
 
 	private resize() {
@@ -144,6 +145,7 @@ export default class ThreePreview {
 		this.meshImages.forEach((img) => {
 			const { width, height, top, left } = img.element.getBoundingClientRect();
 
+			// TODO Maybe move to resize
 			// ? Perhaps there is a better option 💁‍♂️
 			img.mesh.geometry = new THREE.PlaneBufferGeometry(width, height, 100, 100);
 
