@@ -20,6 +20,14 @@ type MeshImage = {
 	material: THREE.ShaderMaterial;
 };
 
+type ScrollSpeed = {
+	lastPos: number | null;
+	newPos: number;
+	timer: NodeJS.Timeout | null;
+	delta: number;
+	delay: number;
+};
+
 export default class ThreePreview {
 	readonly container: HTMLDivElement;
 	readonly images: HTMLImageElement[];
@@ -27,6 +35,7 @@ export default class ThreePreview {
 
 	private time: number;
 	private dimensions: { width: number; height: number };
+	private scrollSpeed: ScrollSpeed;
 	private scene: THREE.Scene;
 	private camera: THREE.PerspectiveCamera;
 	private renderer: THREE.WebGLRenderer;
@@ -40,8 +49,17 @@ export default class ThreePreview {
 		this.images = options.images;
 		this.previewSettings = options.previewSettings;
 
+		//* Default settings
 		this.currentScroll = 0;
 		this.time = 0;
+		this.scrollSpeed = {
+			lastPos: 0,
+			newPos: 0,
+			timer: null,
+			delta: 0,
+			delay: 50
+		};
+		//* -- end of Default settings
 
 		this.dimensions = {
 			width: this.container.offsetWidth,
@@ -90,11 +108,34 @@ export default class ThreePreview {
 		window.addEventListener('scroll', this.scroll.bind(this));
 	}
 
+	private clearScrollSpeed() {
+		this.scrollSpeed.lastPos = null;
+		this.scrollSpeed.delta = 0;
+	}
+
+	private getScrollSpeed() {
+		this.scrollSpeed.newPos = this.currentScroll;
+
+		if (this.scrollSpeed.lastPos !== null) {
+			this.scrollSpeed.delta = this.scrollSpeed.newPos - this.scrollSpeed.lastPos;
+		}
+
+		this.scrollSpeed.lastPos = this.scrollSpeed.newPos;
+
+		if (this.scrollSpeed.timer !== null) {
+			clearTimeout(this.scrollSpeed.timer);
+		}
+
+		this.scrollSpeed.timer = setTimeout(this.clearScrollSpeed.bind(this), this.scrollSpeed.delay);
+	}
+
 	private scroll() {
 		this.currentScroll = window.scrollY || document.documentElement.scrollTop;
 
 		//? Currently removed for better performance, it seems there is no need, and there are no bugs
 		// this.setImagesPosition();
+
+		this.getScrollSpeed();
 	}
 
 	private resize() {
