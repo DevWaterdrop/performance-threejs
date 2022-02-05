@@ -2,6 +2,11 @@ import type { PreviewSettings } from '$lib/types';
 import * as THREE from 'three';
 import vertex from '$lib/threejs/shaders/vertex.glsl?raw';
 import fragment from '$lib/threejs/shaders/fragment.glsl?raw';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import composerVertex from '$lib/threejs/composer_shaders/vertex.glsl?raw';
+import composerFragment from '$lib/threejs/composer_shaders/fragment.glsl?raw';
 import anime from 'animejs';
 
 interface Props {
@@ -21,11 +26,9 @@ type MeshImage = {
 };
 
 type ScrollSpeed = {
-	lastPos: number | null;
-	newPos: number;
-	timer: NodeJS.Timeout | null;
-	delta: number;
-	delay: number;
+	speed: number;
+	target: number;
+	render: number;
 };
 
 export default class ThreePreview {
@@ -43,6 +46,10 @@ export default class ThreePreview {
 	private meshImages: MeshImage[];
 	private currentScroll: number;
 	private raycaster: THREE.Raycaster;
+	private composer: EffectComposer;
+	private renderPass: RenderPass;
+	private shaderPass: ShaderPass;
+	private scrollTimes: number;
 
 	constructor(options: Props) {
 		this.container = options.container;
@@ -51,13 +58,12 @@ export default class ThreePreview {
 
 		//* Default settings
 		this.currentScroll = 0;
+		this.scrollTimes = 0;
 		this.time = 0;
 		this.scrollSpeed = {
-			lastPos: 0,
-			newPos: 0,
-			timer: null,
-			delta: 0,
-			delay: 50
+			speed: 0,
+			target: 0,
+			render: 0
 		};
 		//* -- end of Default settings
 
@@ -91,6 +97,7 @@ export default class ThreePreview {
 		//* -- end of Image zone
 
 		//* Init
+		this.composerPass();
 		this.scroll();
 		this.resize();
 
@@ -108,25 +115,20 @@ export default class ThreePreview {
 		window.addEventListener('scroll', this.scroll.bind(this));
 	}
 
-	private clearScrollSpeed() {
-		this.scrollSpeed.lastPos = null;
-		this.scrollSpeed.delta = 0;
+	private lerp(x: number, y: number, ease: number) {
+		return (1 - ease) * x + ease * y;
 	}
 
-	private getScrollSpeed() {
-		this.scrollSpeed.newPos = this.currentScroll;
-
-		if (this.scrollSpeed.lastPos !== null) {
-			this.scrollSpeed.delta = this.scrollSpeed.newPos - this.scrollSpeed.lastPos;
+	private scrollSpeedRender() {
+		/* scrollTimes > 1 => removes "first" animation if scroll position > 0,
+				cannot be seen in the generator because all scroll animation by default are disabled */
+		if (this.scrollTimes > 1) {
+			// TODO Find better approach (without if)
+			this.scrollSpeed.speed =
+				Math.min(Math.abs(this.currentScroll - this.scrollSpeed.render), 200) / 200;
+			this.scrollSpeed.target += (this.scrollSpeed.speed - this.scrollSpeed.target) * 0.2;
+			this.scrollSpeed.render = this.lerp(this.scrollSpeed.render, this.currentScroll, 0.1);
 		}
-
-		this.scrollSpeed.lastPos = this.scrollSpeed.newPos;
-
-		if (this.scrollSpeed.timer !== null) {
-			clearTimeout(this.scrollSpeed.timer);
-		}
-
-		this.scrollSpeed.timer = setTimeout(this.clearScrollSpeed.bind(this), this.scrollSpeed.delay);
 	}
 
 	private scroll() {
@@ -135,7 +137,10 @@ export default class ThreePreview {
 		//? Currently removed for better performance, it seems there is no need, and there are no bugs
 		// this.setImagesPosition();
 
-		this.getScrollSpeed();
+		const scrollPercentage = (window.scrollY + window.innerHeight) / this.dimensions.height;
+		this.shaderPass.uniforms.scrollPercentage.value = scrollPercentage;
+
+		this.scrollTimes += 1;
 	}
 
 	private resize() {
@@ -147,18 +152,29 @@ export default class ThreePreview {
 		this.camera.aspect = this.dimensions.width / this.dimensions.height;
 		this.camera.fov = 2 * Math.atan(this.dimensions.height / 2 / 600) * (180 / Math.PI);
 		this.camera.updateProjectionMatrix();
+
 		this.renderer.setSize(this.dimensions.width, this.dimensions.height);
+		this.composer.setSize(this.dimensions.width, this.dimensions.height);
 
 		this.setImagesPosition();
 	}
 
+	//! Render
 	private render() {
 		this.time += 0.5;
 
 		// ? Maybe set uniforms only if at least one effect is enabled from previewSettings 🧐
 		this.setUniforms();
 
-		this.renderer.render(this.scene, this.camera);
+		// TODO Find better performance solution
+		if (this.previewSettings.scroll.enable) {
+			this.scrollSpeedRender();
+			this.shaderPass.uniforms.scrollSpeed.value = this.scrollSpeed.target;
+			this.composer.render();
+		} else {
+			this.renderer.render(this.scene, this.camera);
+		}
+
 		window.requestAnimationFrame(this.render.bind(this));
 	}
 
@@ -170,6 +186,29 @@ export default class ThreePreview {
 			element.removeEventListener('click', this.addImage.bind(this));
 		});
 	}
+
+	//* COMPOSER
+	private composerPass() {
+		this.composer = new EffectComposer(this.renderer);
+		this.composer.setSize(this.dimensions.width, this.dimensions.height);
+		this.renderPass = new RenderPass(this.scene, this.camera);
+		this.composer.addPass(this.renderPass);
+
+		const shaderEffect = {
+			uniforms: {
+				tDiffuse: { value: null },
+				scrollSpeed: { value: 0 },
+				scrollPercentage: { value: 0 }
+			},
+			fragmentShader: composerFragment,
+			vertexShader: composerVertex
+		};
+
+		this.shaderPass = new ShaderPass(shaderEffect);
+		this.shaderPass.renderToScreen = true;
+		this.composer.addPass(this.shaderPass);
+	}
+	//* -- enf of COMPOSER
 
 	//* IMAGES
 	private setUniforms() {

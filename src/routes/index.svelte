@@ -19,6 +19,9 @@
 		},
 		waveClick: {
 			enable: false
+		},
+		scroll: {
+			enable: false
 		}
 	};
 
@@ -59,6 +62,18 @@
 		</div>
 		<div class="w-px mx-4 bg-black dark:bg-white" />
 		<div class="w-3/5 flex flex-col gap-2">
+			<EffectBlock>
+				<svelte:fragment slot="name">Scroll</svelte:fragment>
+				<svelte:fragment slot="underName">
+					<Button
+						enabled={previewSettings.scroll.enable}
+						handler={() => {
+							previewSettings.scroll.enable = !previewSettings.scroll.enable;
+						}}>Enable</Button
+					>
+				</svelte:fragment>
+				<svelte:fragment slot="description">Description</svelte:fragment>
+			</EffectBlock>
 			<EffectBlock>
 				<svelte:fragment slot="name">Wave</svelte:fragment>
 				<svelte:fragment slot="underName">

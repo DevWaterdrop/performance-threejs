@@ -8,4 +8,7 @@ export interface PreviewSettings {
 	waveClick: {
 		enable: boolean;
 	};
+	scroll: {
+		enable: boolean;
+	};
 }
