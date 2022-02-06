@@ -35,6 +35,7 @@ export default class ThreePreview {
 	readonly container: HTMLDivElement;
 	readonly images: HTMLImageElement[];
 	previewSettings: PreviewSettings;
+	manualShouldRender: boolean;
 
 	private time: number;
 	private dimensions: { width: number; height: number };
@@ -45,6 +46,7 @@ export default class ThreePreview {
 	private materials: THREE.ShaderMaterial[];
 	private meshImages: MeshImage[];
 	private currentScroll: number;
+	private prevScroll: number;
 	private raycaster: THREE.Raycaster;
 	private composer: EffectComposer;
 	private renderPass: RenderPass;
@@ -58,6 +60,7 @@ export default class ThreePreview {
 
 		//* Default settings
 		this.currentScroll = 0;
+		this.prevScroll = 0;
 		this.scrollTimes = 0;
 		this.time = 0;
 		this.scrollSpeed = {
@@ -65,6 +68,7 @@ export default class ThreePreview {
 			target: 0,
 			render: 0
 		};
+		this.manualShouldRender = false;
 		//* -- end of Default settings
 
 		this.dimensions = {
@@ -91,20 +95,21 @@ export default class ThreePreview {
 		//* Image zone
 		this.materials = [];
 		this.meshImages = [];
-		this.images.forEach((image) => {
-			this.addImage(image);
-		});
+		const promiseImages = this.images.map((image) => this.addImage(image));
 		//* -- end of Image zone
 
-		//* Init
-		this.composerPass();
-		this.scroll();
-		this.resize();
+		Promise.all(promiseImages).then(() => {
+			//* Init
+			this.composerPass();
+			this.scroll();
+			this.resize();
 
-		this.setupScroll();
-		this.setupResize();
+			this.setupScroll();
+			this.setupResize();
 
-		this.render();
+			this.render();
+			this.manualRender();
+		});
 	}
 
 	private setupResize() {
@@ -160,6 +165,7 @@ export default class ThreePreview {
 		this.setImagesPosition();
 	}
 
+	// TODO make it "readonly"
 	manualRender() {
 		// ? Maybe set uniforms only if at least one effect is enabled from previewSettings 🧐
 		this.setUniforms();
@@ -182,7 +188,19 @@ export default class ThreePreview {
 		/* Object.values(this.previewSettings).some((effect) => effect.enable) */
 		// ? Maybe calculate this only when this.previewSettings changed
 
-		return true;
+		if (this.manualShouldRender) return true;
+
+		if (this.previewSettings.scroll.enable && this.currentScroll !== this.prevScroll) {
+			return true;
+		}
+
+		if (this.previewSettings.glitch.enable) {
+			return true;
+		}
+
+		this.prevScroll = this.currentScroll;
+
+		return false;
 	}
 
 	//! Render
@@ -269,10 +287,14 @@ export default class ThreePreview {
 
 			material.uniforms.u_clickPosition.value = intersects[0].uv;
 
+			this.manualShouldRender = true;
+
 			anime({
 				targets: material.uniforms.u_click,
 				easing: 'easeOutQuart',
 				value: [1, 0]
+			}).finished.then(() => {
+				this.manualShouldRender = false;
 			});
 		}
 	}
