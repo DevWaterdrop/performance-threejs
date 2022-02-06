@@ -46,7 +46,6 @@ export default class ThreePreview {
 	private materials: THREE.ShaderMaterial[];
 	private meshImages: MeshImage[];
 	private currentScroll: number;
-	private prevScroll: number;
 	private raycaster: THREE.Raycaster;
 	private composer: EffectComposer;
 	private renderPass: RenderPass;
@@ -60,7 +59,6 @@ export default class ThreePreview {
 
 		//* Default settings
 		this.currentScroll = 0;
-		this.prevScroll = 0;
 		this.scrollTimes = 0;
 		this.time = 0;
 		this.scrollSpeed = {
@@ -190,15 +188,9 @@ export default class ThreePreview {
 
 		if (this.manualShouldRender) return true;
 
-		if (this.previewSettings.scroll.enable && this.currentScroll !== this.prevScroll) {
+		if (this.previewSettings.scroll.enable || this.previewSettings.glitch.enable) {
 			return true;
 		}
-
-		if (this.previewSettings.glitch.enable) {
-			return true;
-		}
-
-		this.prevScroll = this.currentScroll;
 
 		return false;
 	}
