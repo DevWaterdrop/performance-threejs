@@ -83,7 +83,7 @@ export default class ThreePreview {
 		this.camera.fov = 2 * Math.atan(this.dimensions.height / 2 / 600) * (180 / Math.PI);
 
 		this.renderer = new THREE.WebGLRenderer({ alpha: true });
-		this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2.5));
+		this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
 		this.container.appendChild(this.renderer.domElement);
 
 		this.raycaster = new THREE.Raycaster();
@@ -135,7 +135,8 @@ export default class ThreePreview {
 		this.currentScroll = window.scrollY || document.documentElement.scrollTop;
 
 		//? Currently removed for better performance, it seems there is no need, and there are no bugs
-		// this.setImagesPosition();
+		//? UPDATE: Bugs on resize, WIP to remove it
+		this.setImagesPosition();
 
 		const scrollPercentage = (window.scrollY + window.innerHeight) / this.dimensions.height;
 		this.shaderPass.uniforms.scrollPercentage.value = scrollPercentage;
@@ -159,10 +160,7 @@ export default class ThreePreview {
 		this.setImagesPosition();
 	}
 
-	//! Render
-	private render() {
-		this.time += 0.5;
-
+	manualRender() {
 		// ? Maybe set uniforms only if at least one effect is enabled from previewSettings 🧐
 		this.setUniforms();
 
@@ -173,6 +171,26 @@ export default class ThreePreview {
 			this.composer.render();
 		} else {
 			this.renderer.render(this.scene, this.camera);
+		}
+	}
+
+	private shouldRender() {
+		// TODO WIP
+		// TODO Add to resize, scroll
+
+		// ? Maybe use:
+		/* Object.values(this.previewSettings).some((effect) => effect.enable) */
+		// ? Maybe calculate this only when this.previewSettings changed
+
+		return true;
+	}
+
+	//! Render
+	private render() {
+		this.time += 0.5;
+
+		if (this.shouldRender()) {
+			this.manualRender();
 		}
 
 		window.requestAnimationFrame(this.render.bind(this));
@@ -225,10 +243,9 @@ export default class ThreePreview {
 		this.meshImages.forEach((img) => {
 			const { width, height, top, left } = img.element.getBoundingClientRect();
 
-			// TODO Maybe move to resize
-			// ? Perhaps there is a better option 💁‍♂️
-			img.mesh.geometry = new THREE.PlaneBufferGeometry(width, height, 100, 100);
+			// TODO Bug: positionY difference in 1px
 
+			img.mesh.scale.set(width, height, 1);
 			img.mesh.position.y = -this.currentScroll - top + this.dimensions.height / 2 - height / 2;
 			img.mesh.position.x = left - this.dimensions.width / 2 + width / 2;
 		});
@@ -236,8 +253,8 @@ export default class ThreePreview {
 
 	private clickEvent(event: MouseEvent) {
 		const mouse = new THREE.Vector2();
-		mouse.x = (event.clientX / this.dimensions.width) * 2 - 1;
-		mouse.y = -(event.clientY / this.dimensions.height) * 2 + 1;
+		mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+		mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
 		this.raycaster.setFromCamera(mouse, this.camera);
 		const intersects = this.raycaster.intersectObjects(this.scene.children);
@@ -278,7 +295,7 @@ export default class ThreePreview {
 
 		const { top, left, width, height } = image.getBoundingClientRect();
 
-		const geometry = new THREE.PlaneBufferGeometry(width, height, 100, 100);
+		const geometry = new THREE.PlaneBufferGeometry(1, 1, 10, 10);
 		const texture = await new THREE.TextureLoader().loadAsync(image['src']);
 
 		const material = baseMaterial.clone();

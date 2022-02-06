@@ -61,7 +61,7 @@
 			/>
 		</div>
 		<div class="w-px mx-4 bg-black dark:bg-white" />
-		<div class="w-3/5 flex flex-col gap-2">
+		<div class="w-3/5 flex flex-col gap-2 items-center">
 			<EffectBlock>
 				<svelte:fragment slot="name">Scroll</svelte:fragment>
 				<svelte:fragment slot="underName">
@@ -110,6 +110,13 @@
 				</svelte:fragment>
 				<svelte:fragment slot="description">Description</svelte:fragment>
 			</EffectBlock>
+			<div class="my-8 h-px w-1/3 bg-black dark:bg-white" />
+			<img
+				bind:this={images[2]}
+				class="w-2/3 object-cover opacity-0"
+				src="images/office_unsplash_image_smaller_80.jpg"
+				alt="author - İrfan Simsar, source: unsplash.com"
+			/>
 		</div>
 	</div>
 	<Footer />
