@@ -286,7 +286,9 @@ export default class ThreePreview {
 				easing: 'easeOutQuart',
 				value: [1, 0]
 			}).finished.then(() => {
-				this.manualShouldRender = false;
+				if (material.uniforms.u_click.value === 0) {
+					this.manualShouldRender = false;
+				}
 			});
 		}
 	}
