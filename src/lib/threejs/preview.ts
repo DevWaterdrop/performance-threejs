@@ -129,9 +129,15 @@ export default class ThreePreview {
 			// TODO Find better approach (without if)
 			this.scrollSpeed.speed =
 				Math.min(Math.abs(this.currentScroll - this.scrollSpeed.render), 200) / 200;
+			// ? Maybe make it 0.01/0.1 for performance
+			if (this.scrollSpeed.speed < 0.001) this.scrollSpeed.speed = 0;
+
 			this.scrollSpeed.target += (this.scrollSpeed.speed - this.scrollSpeed.target) * 0.2;
 			this.scrollSpeed.render = this.lerp(this.scrollSpeed.render, this.currentScroll, 0.1);
 		}
+
+		// TODO WIP
+		this.manualShouldRender = this.scrollSpeed.speed !== 0;
 	}
 
 	private scroll() {
@@ -168,9 +174,8 @@ export default class ThreePreview {
 		// ? Maybe set uniforms only if at least one effect is enabled from previewSettings 🧐
 		this.setUniforms();
 
-		// TODO Find better performance solution
+		// ? Find better performance solution
 		if (this.previewSettings.scroll.enable) {
-			this.scrollSpeedRender();
 			this.shaderPass.uniforms.scrollSpeed.value = this.scrollSpeed.target;
 			this.composer.render();
 		} else {
@@ -187,17 +192,17 @@ export default class ThreePreview {
 		// ? Maybe calculate this only when this.previewSettings changed
 
 		if (this.manualShouldRender) return true;
-
-		if (this.previewSettings.scroll.enable || this.previewSettings.glitch.enable) {
-			return true;
-		}
-
+		if (this.previewSettings.glitch.enable) return true;
 		return false;
 	}
 
 	//! Render
 	private render() {
 		this.time += 0.5;
+
+		if (this.previewSettings.scroll.enable) {
+			this.scrollSpeedRender();
+		}
 
 		if (this.shouldRender()) {
 			this.manualRender();
