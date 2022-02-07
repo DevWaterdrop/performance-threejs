@@ -177,6 +177,7 @@ export default class ThreePreview {
 		// ? Find better performance solution
 		if (this.previewSettings.scroll.enable) {
 			this.shaderPass.uniforms.scrollSpeed.value = this.scrollSpeed.target;
+			if (this.scrollTimes <= 1) this.renderer.render(this.scene, this.camera); //! Temporarily fix
 			this.composer.render();
 		} else {
 			this.renderer.render(this.scene, this.camera);
