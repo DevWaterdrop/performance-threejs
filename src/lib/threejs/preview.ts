@@ -167,6 +167,7 @@ export default class ThreePreview {
 		this.composer.setSize(this.dimensions.width, this.dimensions.height);
 
 		this.setImagesPosition();
+		this.manualRender();
 	}
 
 	// TODO make it "readonly"
