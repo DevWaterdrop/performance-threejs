@@ -3,7 +3,14 @@ const config = {
 	darkMode: 'class',
 
 	theme: {
-		extend: {}
+		extend: {
+			colors: {
+				'sidebar-main': '#1A1C1E',
+				'sidebar-second': '#262A30',
+				'sidebar-third': '#272B2E',
+				'sidebar-border': '#111315'
+			}
+		}
 	},
 
 	plugins: []

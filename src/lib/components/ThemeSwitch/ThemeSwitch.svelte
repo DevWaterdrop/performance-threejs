@@ -19,8 +19,11 @@
 	};
 </script>
 
-<button on:click={handleClick}>
-	<div class="dark hidden dark:block">
+<button
+	class="relative mb-4 flex h-12 w-[2.875rem] items-center justify-center rounded-xl border border-transparent bg-sidebar-second p-2 outline-none"
+	on:click={handleClick}
+>
+	<div class="light hidden dark:block">
 		{@html darkModeSVG}
 	</div>
 	<div class="light dark:hidden">
@@ -30,10 +33,6 @@
 
 <style lang="postcss">
 	.light > :global(svg) {
-		@apply fill-black;
-	}
-
-	.dark > :global(svg) {
 		@apply fill-white;
 	}
 </style>

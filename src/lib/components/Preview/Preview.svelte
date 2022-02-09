@@ -20,4 +20,4 @@
 	}
 </script>
 
-<div class="absolute top-0 left-0 h-full w-full -z-10" bind:this={container} />
+<div class="absolute top-0 left-0 -z-10 h-full w-full" bind:this={container} />
