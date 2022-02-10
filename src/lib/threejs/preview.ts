@@ -196,11 +196,11 @@ export default class ThreePreview {
 
 		this.camera.position.setY(-this.currentScroll);
 
+		this.scrollTimes += 1;
 		//? Currently removed for better performance, it seems there is no need, and there are no bugs
 		//? UPDATE: Bugs on resize, WIP to remove it
-
-		this.scrollTimes += 1;
 		this.setImagesPosition();
+
 		if (!this.shouldRender()) {
 			this.manualRender();
 		}
