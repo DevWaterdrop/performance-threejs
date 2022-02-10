@@ -27,7 +27,7 @@
 	<div class="flex w-full flex-col gap-2">
 		<ThemeSwitch />
 		<EffectBlock name="Scroll" bind:enabled={previewSettings.scroll.enable} {opened} />
-		<EffectBlock name="Wave" bind:enabled={previewSettings.waveClick.enable} {opened} />
+		<EffectBlock name="Click wave" bind:enabled={previewSettings.waveClick.enable} {opened} />
 		<EffectBlock name="Glitch" bind:enabled={previewSettings.glitch.enable} {opened}>
 			<svelte:fragment slot="content">
 				<Input name="glitch noiseIntensity" bind:value={previewSettings.glitch.noiseIntensity}

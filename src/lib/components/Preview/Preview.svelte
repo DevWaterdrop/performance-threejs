@@ -16,8 +16,8 @@
 	});
 
 	$: if (preview) {
-		preview.previewSettings = previewSettings;
+		preview.PreviewSettings = previewSettings;
 	}
 </script>
 
-<div class="absolute top-0 left-0 -z-10 h-full w-full" bind:this={container} />
+<div class="fixed top-0 left-0 -z-10 h-screen w-screen" bind:this={container} />

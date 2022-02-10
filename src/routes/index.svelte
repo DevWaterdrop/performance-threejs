@@ -5,10 +5,17 @@
 	import Nav from '$lib/components/Nav/Nav.svelte';
 	import Preview from '$lib/components/Preview/Preview.svelte';
 	import Sidebar from '$lib/components/Sidebar/Sidebar.svelte';
+	import { isDarkMode } from '$lib/stores';
+
+	const lengthImages = 20;
 
 	let images: HTMLImageElement[] = [];
-	let imagesLoadStatus: boolean[] = [];
+	let imagesLoadStatus: boolean[] = [...Array(lengthImages)].fill(false);
 	let previewSettings: PreviewSettings = {
+		options: {
+			alpha: false,
+			color: 0x000000
+		},
 		glitch: {
 			enable: false,
 			noiseIntensity: 0.01,
@@ -30,7 +37,12 @@
 		});
 	});
 
+	$: previewSettings.options.color = $isDarkMode ? 0x000000 : 0xffffff;
 	$: isImagesLoaded = imagesLoadStatus.every(Boolean);
+
+	const imgs = [...Array(lengthImages)].map((_value, index) => ({
+		src: `https://picsum.photos/500/500?random=${index}.webp`
+	}));
 </script>
 
 <svelte:head>
@@ -43,25 +55,18 @@
 <Sidebar bind:previewSettings />
 <div class="flex min-h-screen flex-col py-8 pl-24 pr-8 dark:text-white">
 	<Nav />
-	<div class="grid grid-cols-2 gap-4 2xl:grid-cols-3">
-		<img
-			bind:this={images[0]}
-			class="h-full w-full object-cover opacity-0"
-			src="images/nature_unsplash_image_smaller_80.jpg"
-			alt="author - Sascha Bosshard, source: unsplash.com"
-		/>
-		<img
-			bind:this={images[1]}
-			class="h-full w-full object-cover opacity-0"
-			src="images/dino_unsplash_image_smaller_80.jpg"
-			alt="author - James Lee, source: unsplash.com"
-		/>
-		<img
-			bind:this={images[2]}
-			class="h-full w-full object-cover opacity-0"
-			src="images/office_unsplash_image_smaller_80.jpg"
-			alt="author - İrfan Simsar, source: unsplash.com"
-		/>
+	<div class="grid grid-cols-3 gap-4 2xl:grid-cols-5">
+		{#each imgs as img, index (img.src)}
+			<img
+				bind:this={images[index]}
+				class="h-full w-full bg-slate-500 object-cover"
+				class:opacity-20={!isImagesLoaded}
+				class:opacity-0={isImagesLoaded}
+				src={img.src}
+				alt="Random, source: picsum.photos"
+				crossorigin="anonymous"
+			/>
+		{/each}
 	</div>
 	<Footer />
 </div>

@@ -10,7 +10,13 @@
 		rel="stylesheet"
 	/>
 
-	<script lang="ts">
+	<script>
+		let global;
+
+		if (global === undefined) {
+			global = window;
+		}
+
 		const html = document.getElementsByTagName('html')[0];
 
 		if (

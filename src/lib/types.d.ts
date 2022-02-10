@@ -1,4 +1,8 @@
 export interface PreviewSettings {
+	options: {
+		alpha: boolean;
+		color: number;
+	};
 	glitch: {
 		enable: boolean;
 		noiseIntensity: number;
