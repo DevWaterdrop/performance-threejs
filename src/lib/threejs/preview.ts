@@ -201,7 +201,9 @@ export default class ThreePreview {
 
 		this.scrollTimes += 1;
 		this.setImagesPosition();
-		this.manualRender();
+		if (!this.shouldRender()) {
+			this.manualRender();
+		}
 	}
 
 	private resize() {
@@ -218,7 +220,9 @@ export default class ThreePreview {
 		this.composer.setSize(this.dimensions.width, this.dimensions.height);
 
 		this.setImagesPosition(true);
-		this.manualRender();
+		if (!this.shouldRender()) {
+			this.manualRender();
+		}
 	}
 
 	// TODO make it "readonly"
