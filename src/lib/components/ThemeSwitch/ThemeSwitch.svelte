@@ -3,6 +3,10 @@
 	import lightModeSVG from '$lib/assets/icons/light_mode.svg?raw';
 	import { isDarkMode } from '$lib/stores';
 
+	$: if (global.window) {
+		isDarkMode.set(document.querySelector('html').classList.contains('dark'));
+	}
+
 	const handleClick = () => {
 		//* Reverse of same code in routes/__layout.svelte, but without localStorage
 		const html = document.getElementsByTagName('html')[0];
@@ -20,10 +24,6 @@
 			isDarkMode.set(true);
 		}
 	};
-
-	$: if (global.window) {
-		isDarkMode.set(document.querySelector('html').classList.contains('dark'));
-	}
 </script>
 
 <button

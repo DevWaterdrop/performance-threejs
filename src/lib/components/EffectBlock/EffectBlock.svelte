@@ -10,12 +10,17 @@
 
 	const firstLetter = name.charAt(0);
 	const isContentSlot = $$slots.content;
+
+	const handleClick = () => (enabled = !enabled);
+	const handleChevronClick = () => {
+		if (!disabled) return (show = !show);
+	};
 </script>
 
 <button
 	class="relative flex h-12 w-full items-center gap-2 overflow-hidden rounded-xl border-2 border-transparent bg-sidebar-second p-2 outline-none transition-colors disabled:opacity-50"
 	class:border-green-500={enabled}
-	on:click={() => (enabled = !enabled)}
+	on:click={handleClick}
 	{disabled}
 >
 	<span
@@ -29,11 +34,7 @@
 			class:-rotate-90={show}
 			class:opacity-0={!opened}
 			class:pointer-events-none={!opened}
-			on:click|stopPropagation={() => {
-				if (!disabled) {
-					show = !show;
-				}
-			}}
+			on:click|stopPropagation={handleChevronClick}
 		>
 			{@html chevronSVG}
 		</div>

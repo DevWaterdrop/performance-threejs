@@ -9,6 +9,8 @@
 	export let isImagesLoaded: boolean;
 
 	let opened = false;
+
+	const handleClick = () => (opened = !opened);
 </script>
 
 <!-- Inspired by https://dribbble.com/shots/16451584-Minimal-sidebar-navigation-for-dashboard -->
@@ -19,7 +21,7 @@
 	<div
 		class="absolute top-5 -right-[0.875rem] z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-sidebar-third text-2xl transition-transform"
 		class:translate-x-5={!opened}
-		on:click={() => (opened = !opened)}
+		on:click={handleClick}
 	>
 		<div class="svg" class:rotate-180={opened}>
 			{@html chevronSVG}

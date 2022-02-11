@@ -1,8 +1,10 @@
 <script context="module" lang="ts">
 	export const load: import('@sveltejs/kit').Load = async ({ fetch, url: { searchParams } }) => {
 		const href = 'https://picsum.photos';
+
 		const limit = searchParams.get('limit') || 20;
 		const size = searchParams.get('size') || 500;
+
 		const response = await fetch(`${href}/v2/list?page=2&limit=${limit}`);
 		if (!response.ok) return { status: response.status, error: `${href} - is down?` };
 
