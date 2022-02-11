@@ -4,6 +4,7 @@
 	export let enabled: boolean;
 	export let opened: boolean;
 	export let name: string;
+	export let disabled: boolean;
 
 	let show = false;
 
@@ -12,9 +13,10 @@
 </script>
 
 <button
-	class="relative flex h-12 w-full items-center gap-2 overflow-hidden rounded-xl border border-transparent bg-sidebar-second p-2 outline-none transition-colors"
+	class="relative flex h-12 w-full items-center gap-2 overflow-hidden rounded-xl border border-transparent bg-sidebar-second p-2 outline-none transition-colors disabled:opacity-50"
 	class:border-green-500={enabled}
 	on:click={() => (enabled = !enabled)}
+	{disabled}
 >
 	<span
 		class="flex min-h-full min-w-[1.75rem] items-center justify-center text-2xl font-semibold uppercase"
@@ -27,7 +29,11 @@
 			class:-rotate-90={show}
 			class:opacity-0={!opened}
 			class:pointer-events-none={!opened}
-			on:click|stopPropagation={() => (show = !show)}
+			on:click|stopPropagation={() => {
+				if (!disabled) {
+					show = !show;
+				}
+			}}
 		>
 			{@html chevronSVG}
 		</div>

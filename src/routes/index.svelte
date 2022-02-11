@@ -72,7 +72,7 @@
 {#if isImagesLoaded}
 	<Preview images={imagesElement} {previewSettings} />
 {/if}
-<Sidebar bind:previewSettings />
+<Sidebar bind:previewSettings {isImagesLoaded} />
 <div class="flex min-h-screen flex-col py-8 pl-24 pr-8 dark:text-white">
 	<Nav />
 	<div class="grid grid-cols-3 gap-4 2xl:grid-cols-5">

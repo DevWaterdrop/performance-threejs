@@ -6,6 +6,7 @@
 	import Input from '../Input/Input.svelte';
 
 	export let previewSettings: PreviewSettings;
+	export let isImagesLoaded: boolean;
 
 	let opened = false;
 </script>
@@ -26,14 +27,30 @@
 	</div>
 	<div class="flex w-full flex-col gap-2">
 		<ThemeSwitch />
-		<EffectBlock name="Scroll" bind:enabled={previewSettings.scroll.enable} {opened} />
+		<EffectBlock
+			name="Scroll"
+			bind:enabled={previewSettings.scroll.enable}
+			{opened}
+			disabled={!isImagesLoaded}
+		/>
 		<EffectBlock
 			name="Wave scroll (top)"
 			bind:enabled={previewSettings.scrollTop.enable}
 			{opened}
+			disabled={!isImagesLoaded}
 		/>
-		<EffectBlock name="Click wave" bind:enabled={previewSettings.waveClick.enable} {opened} />
-		<EffectBlock name="Glitch" bind:enabled={previewSettings.glitch.enable} {opened}>
+		<EffectBlock
+			name="Click wave"
+			bind:enabled={previewSettings.waveClick.enable}
+			{opened}
+			disabled={!isImagesLoaded}
+		/>
+		<EffectBlock
+			name="Glitch"
+			bind:enabled={previewSettings.glitch.enable}
+			{opened}
+			disabled={!isImagesLoaded}
+		>
 			<svelte:fragment slot="content">
 				<Input name="glitch noiseIntensity" bind:value={previewSettings.glitch.noiseIntensity}
 					>Noise</Input
