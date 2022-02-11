@@ -16,4 +16,7 @@ export interface PreviewSettings {
 	scroll: {
 		enable: boolean;
 	};
+	scrollTop: {
+		enable: boolean;
+	};
 }

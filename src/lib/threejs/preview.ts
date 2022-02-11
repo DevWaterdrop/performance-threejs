@@ -114,6 +114,10 @@ export default class ThreePreview {
 		this.raycaster.near = near;
 		this.raycaster.far = far;
 
+		//* Composer
+		this.composerPass();
+		//* -- end of Composer
+
 		//* Image zone
 		this.materials = [];
 		this.mapMeshImages = new Map();
@@ -122,7 +126,6 @@ export default class ThreePreview {
 
 		//* Init
 		Promise.all(promiseImages).then(() => {
-			this.composerPass();
 			this.scroll();
 			this.resize();
 
@@ -193,6 +196,8 @@ export default class ThreePreview {
 			this.scrollSpeed.render = this.lerp(this.scrollSpeed.render, this.currentScroll, 0.1);
 		}
 
+		this.shaderPass.uniforms.scrollSpeed.value = this.scrollSpeed.target; // ? Maybe move to setUniforms
+
 		// TODO WIP
 		// ? Maybe make it 0.01/0.1 for performance
 		this.manualShouldRender = this.clickRender > 0 || this.scrollSpeed.speed > 0.01;
@@ -234,12 +239,14 @@ export default class ThreePreview {
 
 	// TODO make it "readonly"
 	manualRender() {
+		const isShaderPass =
+			this.previewSettings.scroll.enable || this.previewSettings.scrollTop.enable;
+
 		// ? Maybe set uniforms only if at least one effect is enabled from previewSettings 🧐
-		this.setUniforms();
+		this.setUniforms({ image: true, shaderPass: isShaderPass });
 
 		// ? Find better performance solution
-		if (this.previewSettings.scroll.enable) {
-			this.shaderPass.uniforms.scrollSpeed.value = this.scrollSpeed.target;
+		if (isShaderPass) {
 			if (this.scrollTimes <= 1) this.renderer.render(this.scene, this.camera); //! Temporarily fix
 			this.composer.render();
 		} else {
@@ -288,10 +295,15 @@ export default class ThreePreview {
 		this.renderPass = new RenderPass(this.scene, this.camera);
 		this.composer.addPass(this.renderPass);
 
+		const { scroll, scrollTop } = this.previewSettings;
+
 		const shaderEffect = {
 			uniforms: {
 				tDiffuse: { value: null },
-				scrollSpeed: { value: 0 }
+				scrollSpeed: { value: 0 },
+				u_time: { value: 0 },
+				u_scroll: { value: scroll },
+				u_scrollTop: { value: scrollTop }
 			},
 			fragmentShader: composerFragment,
 			vertexShader: composerVertex
@@ -303,17 +315,25 @@ export default class ThreePreview {
 	}
 	//* -- end of COMPOSER
 
-	//* IMAGES
-	private setUniforms() {
-		for (const material of this.materials) {
-			const { glitch, waveClick } = this.previewSettings;
+	private setUniforms({ image = false, shaderPass = false }) {
+		const { glitch, waveClick, scroll, scrollTop } = this.previewSettings;
 
-			material.uniforms.u_time.value = this.time;
-			material.uniforms.u_glitch.value = glitch;
-			material.uniforms.u_waveClick.value = waveClick;
+		if (image) {
+			for (const material of this.materials) {
+				material.uniforms.u_time.value = this.time;
+				material.uniforms.u_glitch.value = glitch;
+				material.uniforms.u_waveClick.value = waveClick;
+			}
+		}
+
+		if (shaderPass) {
+			this.shaderPass.uniforms.u_time.value = this.time;
+			this.shaderPass.uniforms.u_scroll.value = scroll;
+			this.shaderPass.uniforms.u_scrollTop.value = scrollTop;
 		}
 	}
 
+	//* IMAGES
 	private setImagesPosition(resize = false) {
 		this.mapMeshImages.forEach((img) => {
 			// TODO Bug: positionY difference in 1px (FIXED?)

@@ -48,6 +48,9 @@
 		},
 		scroll: {
 			enable: false
+		},
+		scrollTop: {
+			enable: false
 		}
 	};
 
