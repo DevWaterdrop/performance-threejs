@@ -13,7 +13,7 @@
 </script>
 
 <button
-	class="relative flex h-12 w-full items-center gap-2 overflow-hidden rounded-xl border border-transparent bg-sidebar-second p-2 outline-none transition-colors disabled:opacity-50"
+	class="relative flex h-12 w-full items-center gap-2 overflow-hidden rounded-xl border-2 border-transparent bg-sidebar-second p-2 outline-none transition-colors disabled:opacity-50"
 	class:border-green-500={enabled}
 	on:click={() => (enabled = !enabled)}
 	{disabled}

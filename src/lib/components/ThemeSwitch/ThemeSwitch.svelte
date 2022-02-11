@@ -27,7 +27,7 @@
 </script>
 
 <button
-	class="relative mb-4 flex h-12 w-[2.875rem] items-center justify-center rounded-xl border border-transparent bg-sidebar-second p-2 outline-none"
+	class="relative mb-4 flex h-12 w-[2.875rem] items-center justify-center rounded-xl border-2 border-transparent bg-sidebar-second p-2 outline-none"
 	on:click={handleClick}
 >
 	<div class="light hidden dark:block">
