@@ -2,6 +2,7 @@ export interface PreviewSettings {
 	options: {
 		alpha: boolean;
 		color: number;
+		maxDPR?: number;
 	};
 	glitch: {
 		enable: boolean;

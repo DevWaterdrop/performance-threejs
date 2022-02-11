@@ -15,8 +15,7 @@ uniform sampler2D u_image;
 uniform float u_time;
 uniform Glitch u_glitch;
 uniform WaveClick u_waveClick;
-uniform float u_scale;
-
+uniform vec2 u_scale;
 
 // Varying
 varying vec2 vUv;
@@ -71,7 +70,7 @@ vec4 glitch(vec2 newUV){
 // --- end of Glitch ---
 
 void main()	{
-	vec2 newUV = vUv*u_scale;
+	vec2 newUV = vUv*u_scale+vec2((u_scale.x - 1.) / 2. * -1.,0.);
 	vec4 image = texture2D(u_image,newUV);
 
 	gl_FragColor = image;

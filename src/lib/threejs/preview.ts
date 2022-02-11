@@ -85,27 +85,33 @@ export default class ThreePreview {
 			this.scene.background = new THREE.Color(this.previewSettings.options.color);
 		}
 
+		const near = 70;
+		const far = 2000;
+
 		this.camera = new THREE.PerspectiveCamera(
 			70,
 			this.dimensions.width / this.dimensions.height,
-			100,
-			2000
+			near,
+			far
 		);
 		this.camera.position.z = 600;
 		this.camera.position.y = -this.currentScroll;
-		this.camera.fov = 2 * Math.atan(this.dimensions.height / 2 / 600) * (180 / Math.PI);
+		this.camera.fov =
+			2 * Math.atan(this.dimensions.height / 2 / this.camera.position.z) * (180 / Math.PI);
 
 		this.renderer = new THREE.WebGLRenderer({
 			powerPreference: 'high-performance',
 			alpha: this.previewSettings.options.alpha
 		});
 
-		this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+		this.renderer.setPixelRatio(
+			Math.min(devicePixelRatio, this.previewSettings.options.maxDPR ?? 1.75)
+		);
 		this.container.appendChild(this.renderer.domElement);
 
 		this.raycaster = new THREE.Raycaster();
-		this.raycaster.near = 100;
-		this.raycaster.far = 2000;
+		this.raycaster.near = near;
+		this.raycaster.far = far;
 
 		//* Image zone
 		this.materials = [];
@@ -308,14 +314,20 @@ export default class ThreePreview {
 
 	private setImagesPosition(resize = false) {
 		this.mapMeshImages.forEach((img) => {
+			// TODO Bug: positionY difference in 1px (FIXED?)
 			const { width, height, top, left } = img.element.getBoundingClientRect();
 
 			if (resize) {
 				img.mesh.visible = true;
 			}
 
-			// TODO Bug: positionY difference in 1px
-			img.material.uniforms.u_scale.value = Math.min(img.element.naturalWidth / width, 1); // TODO WIP
+			// ? Maybe remove Math.min
+			img.material.uniforms.u_scale.value = [
+				Math.min((width * img.element.naturalHeight) / (height * img.element.naturalWidth), 1),
+				1
+			]; // TODO WIP
+
+			console.log(img.material.uniforms.u_scale.value);
 
 			img.mesh.scale.set(width, height, 1); // ? Maybe if not resize
 			img.mesh.position.y = -this.currentScroll - top + this.dimensions.height / 2 - height / 2;
@@ -325,32 +337,36 @@ export default class ThreePreview {
 	}
 
 	private clickEvent(event: MouseEvent) {
-		this.vector2.setX((event.clientX / window.innerWidth) * 2 - 1);
-		this.vector2.setY(-(event.clientY / window.innerHeight) * 2 + 1);
+		if (this.previewSettings.waveClick.enable) {
+			this.vector2.setX((event.clientX / window.innerWidth) * 2 - 1);
+			this.vector2.setY(-(event.clientY / window.innerHeight) * 2 + 1);
 
-		this.raycaster.setFromCamera(this.vector2, this.camera);
-		const intersects = this.raycaster.intersectObjects(this.scene.children);
+			this.raycaster.setFromCamera(this.vector2, this.camera);
+			const intersects = this.raycaster.intersectObjects(this.scene.children);
 
-		if (intersects.length > 0) {
-			const element = event.currentTarget as HTMLImageElement;
+			if (intersects.length > 0) {
+				const element = event.currentTarget as HTMLImageElement;
 
-			const { material } = this.mapMeshImages.get(element.id);
+				const { material } = this.mapMeshImages.get(element.id);
 
-			material.uniforms.u_clickPosition.value = intersects[0].uv;
+				material.uniforms.u_clickPosition.value = intersects[0].uv;
 
-			this.manualShouldRender = true;
-			this.clickRender += 1;
+				this.manualShouldRender = true;
+				this.clickRender += 1;
 
-			anime({
-				targets: material.uniforms.u_click,
-				easing: 'easeOutQuart',
-				value: [1, 0]
-			}).finished.then(() => {
-				if (material.uniforms.u_click.value === 0) {
-					this.manualShouldRender = false;
-					this.clickRender -= 1;
-				}
-			});
+				anime({
+					targets: material.uniforms.u_click,
+					easing: 'easeOutQuart',
+					value: [1, 0]
+				}).finished.then(() => {
+					if (material.uniforms.u_click.value === 0) {
+						this.clickRender -= 1;
+						if (this.clickRender === 0) {
+							this.manualShouldRender = false;
+						}
+					}
+				});
+			}
 		}
 	}
 
@@ -362,10 +378,10 @@ export default class ThreePreview {
 		const baseMaterial = new THREE.ShaderMaterial({
 			uniforms: {
 				u_image: { value: 0 },
-				u_scale: { value: Math.min(image.naturalWidth / width, 1) },
+				u_scale: { value: [1, 1] },
 				u_time: { value: 0 },
 				u_click: { value: 0 },
-				u_clickPosition: { value: this.vector2.set(0.5, 0.5) }, // Center of Image
+				u_clickPosition: { value: [0.5, 0.5] }, // Center of Image
 				u_glitch: { value: glitch },
 				u_waveClick: { value: waveClick }
 			},
