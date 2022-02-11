@@ -211,7 +211,7 @@ export default class ThreePreview {
 		this.scrollTimes += 1;
 		//? Currently removed for better performance, it seems there is no need, and there are no bugs
 		//? UPDATE: Bugs on resize, WIP to remove it
-		this.setImagesPosition();
+		// this.setImagesPosition();
 
 		if (!this.shouldRender()) {
 			this.manualRender();
@@ -339,6 +339,7 @@ export default class ThreePreview {
 			// TODO Bug: positionY difference in 1px (FIXED?)
 			const { width, height, top, left } = img.element.getBoundingClientRect();
 
+			// TODO WIP need to remove resize prop
 			if (resize) {
 				img.mesh.visible = true;
 			}
