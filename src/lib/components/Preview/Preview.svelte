@@ -12,7 +12,9 @@
 	onMount(() => {
 		preview = new ThreePreview({ container, images, previewSettings });
 
-		return preview.cleanUp();
+		return () => {
+			preview.cleanUp();
+		};
 	});
 
 	$: if (preview) {

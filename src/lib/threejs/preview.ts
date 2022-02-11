@@ -55,6 +55,7 @@ export default class ThreePreview {
 	private mapMeshImages: MapMeshImages;
 	private clickRender: number;
 	private vector2: THREE.Vector2;
+	private observer: IntersectionObserver;
 
 	constructor(options: Props) {
 		this.container = options.container;
@@ -163,7 +164,7 @@ export default class ThreePreview {
 	}
 
 	private setupObserver() {
-		const observer = new IntersectionObserver((entries) => {
+		this.observer = new IntersectionObserver((entries) => {
 			entries.forEach((entry) => {
 				const { mesh } = this.mapMeshImages.get(entry.target.id);
 
@@ -172,7 +173,7 @@ export default class ThreePreview {
 		});
 
 		this.images.forEach((image) => {
-			observer.observe(image);
+			this.observer.observe(image);
 		});
 	}
 
@@ -277,6 +278,7 @@ export default class ThreePreview {
 		this.mapMeshImages.forEach(({ element }) => {
 			element.removeEventListener('click', this.addImage.bind(this));
 		});
+		this.observer.disconnect();
 	}
 
 	//* COMPOSER
