@@ -327,8 +327,6 @@ export default class ThreePreview {
 				1
 			]; // TODO WIP
 
-			console.log(img.material.uniforms.u_scale.value);
-
 			img.mesh.scale.set(width, height, 1); // ? Maybe if not resize
 			img.mesh.position.y = -this.currentScroll - top + this.dimensions.height / 2 - height / 2;
 			img.mesh.position.x = left - this.dimensions.width / 2 + width / 2;
