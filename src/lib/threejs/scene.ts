@@ -2,12 +2,8 @@ import type { SceneSettings } from '$lib/types';
 import * as THREE from 'three';
 import vertex from '$lib/threejs/shaders/vertex.glsl?raw';
 import fragment from '$lib/threejs/shaders/fragment.glsl?raw';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
-import composerVertex from '$lib/threejs/composer_shaders/vertex.glsl?raw';
-import composerFragment from '$lib/threejs/composer_shaders/fragment.glsl?raw';
 import type MacawImage from './image';
+import MacawComposer from './composer';
 
 interface Props {
 	container: HTMLDivElement;
@@ -29,10 +25,6 @@ export default class MacawScene {
 
 	private time: number;
 	private scrollSpeed: ScrollSpeed;
-	private renderer: THREE.WebGLRenderer;
-	private composer: EffectComposer;
-	private renderPass: RenderPass;
-	private shaderPass: ShaderPass;
 	private scrollTimes: number;
 	private mapMeshImages: MapMeshImages;
 
@@ -50,6 +42,12 @@ export default class MacawScene {
 	dimensions: { width: number; height: number };
 	currentScroll: number;
 	// TODO -- end
+
+	// TODO WIP 2
+	readonly renderer: THREE.WebGLRenderer;
+
+	private macawComposer: MacawComposer;
+	// TODO -- end of 2
 
 	constructor(options: Props) {
 		this.container = options.container;
@@ -124,7 +122,13 @@ export default class MacawScene {
 		this.raycaster.far = far;
 
 		//* Composer
-		this.composerPass();
+		this.macawComposer = new MacawComposer({
+			scene: this.scene,
+			camera: this.camera,
+			renderer: this.renderer,
+			dimensions: this.dimensions,
+			settings: this.settings
+		});
 		//* -- end of Composer
 
 		//* Image zone
@@ -205,7 +209,7 @@ export default class MacawScene {
 			this.scrollSpeed.render = this.lerp(this.scrollSpeed.render, this.currentScroll, 0.1);
 		}
 
-		this.shaderPass.uniforms.scrollSpeed.value = this.scrollSpeed.target; // ? Maybe move to setUniforms
+		this.macawComposer.shaderPass.uniforms.scrollSpeed.value = this.scrollSpeed.target; // ? Maybe move to setUniforms
 
 		// TODO WIP
 		// ? Maybe make it 0.01/0.1 for performance
@@ -238,7 +242,7 @@ export default class MacawScene {
 		this.camera.updateProjectionMatrix();
 
 		this.renderer.setSize(this.dimensions.width, this.dimensions.height);
-		this.composer.setSize(this.dimensions.width, this.dimensions.height);
+		this.macawComposer.composer.setSize(this.dimensions.width, this.dimensions.height);
 
 		this.setImagesPosition(true);
 		if (!this.shouldRender()) {
@@ -256,7 +260,7 @@ export default class MacawScene {
 		// ? Find better performance solution
 		if (isShaderPass) {
 			if (this.scrollTimes <= 1) this.renderer.render(this.scene, this.camera); //! Temporarily fix
-			this.composer.render();
+			this.macawComposer.composer.render();
 		} else {
 			this.renderer.render(this.scene, this.camera);
 		}
@@ -296,33 +300,6 @@ export default class MacawScene {
 		this.observer.disconnect();
 	}
 
-	//* COMPOSER
-	private composerPass() {
-		this.composer = new EffectComposer(this.renderer);
-		this.composer.setSize(this.dimensions.width, this.dimensions.height);
-		this.renderPass = new RenderPass(this.scene, this.camera);
-		this.composer.addPass(this.renderPass);
-
-		const { scroll, scrollTop } = this.settings;
-
-		const shaderEffect = {
-			uniforms: {
-				tDiffuse: { value: null },
-				scrollSpeed: { value: 0 },
-				u_time: { value: 0 },
-				u_scroll: { value: scroll },
-				u_scrollTop: { value: scrollTop }
-			},
-			fragmentShader: composerFragment,
-			vertexShader: composerVertex
-		};
-
-		this.shaderPass = new ShaderPass(shaderEffect);
-		this.shaderPass.renderToScreen = true;
-		this.composer.addPass(this.shaderPass);
-	}
-	//* -- end of COMPOSER
-
 	private setUniforms({ image = false, shaderPass = false }) {
 		const { glitch, waveClick, scroll, scrollTop } = this.settings;
 
@@ -335,9 +312,9 @@ export default class MacawScene {
 		}
 
 		if (shaderPass) {
-			this.shaderPass.uniforms.u_time.value = this.time;
-			this.shaderPass.uniforms.u_scroll.value = scroll;
-			this.shaderPass.uniforms.u_scrollTop.value = scrollTop;
+			this.macawComposer.shaderPass.uniforms.u_time.value = this.time;
+			this.macawComposer.shaderPass.uniforms.u_scroll.value = scroll;
+			this.macawComposer.shaderPass.uniforms.u_scrollTop.value = scrollTop;
 		}
 	}
 
