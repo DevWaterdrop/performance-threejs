@@ -23,7 +23,6 @@
 
 <script lang="ts">
 	import type { SceneSettings } from '$lib/types';
-	import { onMount } from 'svelte';
 	import Footer from '$lib/components/Footer/Footer.svelte';
 	import Nav from '$lib/components/Nav/Nav.svelte';
 	import Preview from '$lib/components/Preview/Preview.svelte';
@@ -56,24 +55,16 @@
 		}
 	};
 
-	onMount(() => {
-		imagesElement.forEach((image, index) => {
-			if (image.complete) imagesLoadStatus[index] = true;
-			image.onload = () => (imagesLoadStatus[index] = true);
-		});
-	});
-
 	$: sceneSettings.options.color = $isDarkMode ? 0x000000 : 0xffffff;
-	$: isImagesLoaded = imagesLoadStatus.every(Boolean);
+	// TODO Rename
+	$: isImagesLoaded = imagesLoadStatus.some(Boolean);
 </script>
 
 <svelte:head>
 	<title>Performance Threejs 🦜</title>
 </svelte:head>
 
-{#if isImagesLoaded}
-	<Preview images={imagesElement} {sceneSettings} />
-{/if}
+<Preview images={imagesElement} {sceneSettings} bind:imagesLoadStatus />
 <Sidebar bind:sceneSettings {isImagesLoaded} />
 <div class="flex min-h-screen flex-col py-8 pl-24 pr-8 dark:text-white">
 	<Nav />
@@ -82,8 +73,8 @@
 			<img
 				bind:this={imagesElement[index]}
 				class="h-full w-full bg-slate-500 object-cover"
-				class:opacity-20={!isImagesLoaded}
-				class:opacity-0={isImagesLoaded}
+				class:opacity-20={!imagesLoadStatus[index]}
+				class:opacity-0={imagesLoadStatus[index]}
 				src={image.src}
 				alt="Random, source: picsum.photos"
 				crossorigin="anonymous"

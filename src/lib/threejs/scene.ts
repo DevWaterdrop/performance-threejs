@@ -7,23 +7,12 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import composerVertex from '$lib/threejs/composer_shaders/vertex.glsl?raw';
 import composerFragment from '$lib/threejs/composer_shaders/fragment.glsl?raw';
-import anime from 'animejs';
+import type MacawImage from './image';
 
 interface Props {
 	container: HTMLDivElement;
-	images: HTMLImageElement[];
 	sceneSettings: SceneSettings;
 }
-
-type MeshImage = {
-	element: HTMLImageElement;
-	mesh: THREE.Mesh;
-	top: number;
-	left: number;
-	width: number;
-	height: number;
-	material: THREE.ShaderMaterial;
-};
 
 type ScrollSpeed = {
 	speed: number;
@@ -31,35 +20,39 @@ type ScrollSpeed = {
 	render: number;
 };
 
-type MapMeshImages = Map<string, MeshImage>;
+type MapMeshImages = Map<string, MacawImage>;
 
 export default class MacawScene {
 	readonly container: HTMLDivElement;
 	readonly images: HTMLImageElement[];
 	manualShouldRender: boolean;
 
-	private settings: SceneSettings;
 	private time: number;
-	private dimensions: { width: number; height: number };
 	private scrollSpeed: ScrollSpeed;
-	private scene: THREE.Scene;
-	private camera: THREE.PerspectiveCamera;
 	private renderer: THREE.WebGLRenderer;
-	private materials: THREE.ShaderMaterial[];
-	private currentScroll: number;
-	private raycaster: THREE.Raycaster;
 	private composer: EffectComposer;
 	private renderPass: RenderPass;
 	private shaderPass: ShaderPass;
 	private scrollTimes: number;
 	private mapMeshImages: MapMeshImages;
-	private clickRender: number;
-	private vector2: THREE.Vector2;
-	private observer: IntersectionObserver;
+
+	// TODO WIP
+	readonly baseMaterial: THREE.ShaderMaterial;
+	readonly raycaster: THREE.Raycaster;
+	readonly vector2: THREE.Vector2;
+	readonly camera: THREE.PerspectiveCamera;
+	readonly scene: THREE.Scene;
+	readonly materials: THREE.ShaderMaterial[];
+
+	observer: IntersectionObserver;
+	settings: SceneSettings;
+	clickRender: number;
+	dimensions: { width: number; height: number };
+	currentScroll: number;
+	// TODO -- end
 
 	constructor(options: Props) {
 		this.container = options.container;
-		this.images = options.images;
 		this.settings = options.sceneSettings;
 
 		//* Default settings
@@ -74,6 +67,24 @@ export default class MacawScene {
 		this.manualShouldRender = false;
 		this.clickRender = 0;
 		this.vector2 = new THREE.Vector2();
+
+		// TODO
+		const { glitch, waveClick } = this.settings;
+		this.baseMaterial = new THREE.ShaderMaterial({
+			uniforms: {
+				u_image: { value: 0 },
+				u_scale: { value: [1, 1] },
+				u_time: { value: 0 },
+				u_click: { value: 0 },
+				u_clickPosition: { value: [0.5, 0.5] }, // Center of Image
+				u_glitch: { value: glitch },
+				u_waveClick: { value: waveClick }
+			},
+			fragmentShader: fragment,
+			vertexShader: vertex
+		});
+		// TODO -- end
+
 		//* -- end of Default settings
 
 		this.dimensions = {
@@ -119,21 +130,18 @@ export default class MacawScene {
 		//* Image zone
 		this.materials = [];
 		this.mapMeshImages = new Map();
-		const promiseImages = this.images.map((image, index) => this.addImage(image, index));
 		//* -- end of Image zone
 
 		//* Init
-		Promise.all(promiseImages).then(() => {
-			this.scroll();
-			this.resize();
+		this.scroll();
+		this.resize();
 
-			this.setupObserver();
-			this.setupScroll();
-			this.setupResize();
+		this.setupObserver();
+		this.setupScroll();
+		this.setupResize();
 
-			this.render();
-			this.manualRender();
-		});
+		this.render();
+		this.manualRender();
 	}
 
 	//* SETTER
@@ -146,6 +154,13 @@ export default class MacawScene {
 		// this.mapMeshImages.forEach((image) => (image.mesh.visible = true));
 
 		this.settings = sceneSettings;
+		this.manualRender();
+	}
+
+	set Image(image: MacawImage) {
+		this.mapMeshImages.set(image.element.id, image);
+
+		this.setImagesPosition();
 		this.manualRender();
 	}
 	//* -- end of SETTER
@@ -171,10 +186,6 @@ export default class MacawScene {
 
 				mesh.visible = entry.isIntersecting;
 			});
-		});
-
-		this.images.forEach((image) => {
-			this.observer.observe(image);
 		});
 	}
 
@@ -279,8 +290,8 @@ export default class MacawScene {
 		// TODO WIP
 		window.removeEventListener('resize', this.resize.bind(this));
 		window.removeEventListener('scroll', this.scroll.bind(this));
-		this.mapMeshImages.forEach(({ element }) => {
-			element.removeEventListener('click', this.addImage.bind(this));
+		this.mapMeshImages.forEach((img) => {
+			img.cleanUp();
 		});
 		this.observer.disconnect();
 	}
@@ -333,117 +344,7 @@ export default class MacawScene {
 	//* IMAGES
 	private setImagesPosition(resize = false) {
 		this.mapMeshImages.forEach((img) => {
-			// TODO Bug: positionY difference in 1px (FIXED?)
-			const { width, height, top, left } = img.element.getBoundingClientRect();
-
-			// TODO WIP need to remove resize prop
-			if (resize) {
-				img.mesh.visible = true;
-			}
-
-			// ? Maybe remove Math.min
-			img.material.uniforms.u_scale.value = [
-				Math.min((width * img.element.naturalHeight) / (height * img.element.naturalWidth), 1),
-				1
-			]; // TODO WIP
-
-			img.mesh.scale.set(width, height, 1); // ? Maybe if not resize
-			img.mesh.position.y = -this.currentScroll - top + this.dimensions.height / 2 - height / 2;
-			img.mesh.position.x = left - this.dimensions.width / 2 + width / 2;
-			img.mesh.updateMatrix();
+			img.setPosition(resize);
 		});
 	}
-
-	private clickEvent(event: MouseEvent) {
-		if (this.settings.waveClick.enable) {
-			this.vector2.setX((event.clientX / window.innerWidth) * 2 - 1);
-			this.vector2.setY(-(event.clientY / window.innerHeight) * 2 + 1);
-
-			this.raycaster.setFromCamera(this.vector2, this.camera);
-			const intersects = this.raycaster.intersectObjects(this.scene.children);
-
-			if (intersects.length > 0) {
-				const element = event.currentTarget as HTMLImageElement;
-
-				const { material } = this.mapMeshImages.get(element.id);
-
-				material.uniforms.u_clickPosition.value = intersects[0].uv;
-
-				this.manualShouldRender = true;
-				this.clickRender += 1;
-
-				anime({
-					targets: material.uniforms.u_click,
-					easing: 'easeOutQuart',
-					value: [1, 0]
-				}).finished.then(() => {
-					if (material.uniforms.u_click.value === 0) {
-						this.clickRender -= 1;
-						if (this.clickRender === 0) {
-							this.manualShouldRender = false;
-						}
-					}
-				});
-			}
-		}
-	}
-
-	private async addImage(image: HTMLImageElement, index: number) {
-		const { glitch, waveClick } = this.settings;
-
-		const { top, left, width, height } = image.getBoundingClientRect();
-
-		const baseMaterial = new THREE.ShaderMaterial({
-			uniforms: {
-				u_image: { value: 0 },
-				u_scale: { value: [1, 1] },
-				u_time: { value: 0 },
-				u_click: { value: 0 },
-				u_clickPosition: { value: [0.5, 0.5] }, // Center of Image
-				u_glitch: { value: glitch },
-				u_waveClick: { value: waveClick }
-			},
-			fragmentShader: fragment,
-			vertexShader: vertex
-		});
-
-		const geometry = new THREE.PlaneBufferGeometry(1, 1, 10, 10);
-		// TODO Use code below (this method cause error: GL ERROR:GL_INVALID_VALUE: glTexSubImage2D: bad dimensions)
-		/*
-			const texture = new THREE.Texture();
-			texture.needsUpdate = true;
-		*/
-		const texture = await new THREE.TextureLoader().loadAsync(image.src);
-
-		const material = baseMaterial.clone();
-		material.uniforms.u_image.value = texture;
-
-		const mesh = new THREE.Mesh(geometry, material);
-
-		// Events
-		image.addEventListener('click', this.clickEvent.bind(this));
-		// --- end of Events
-
-		mesh.matrixAutoUpdate = false;
-
-		this.materials.push(material);
-
-		// TODO WIP ? Performance
-		image.id = image.id ? image.id : `threejs_img_${index}`;
-
-		this.mapMeshImages.set(image.id, {
-			element: image,
-			mesh,
-			top,
-			left,
-			width,
-			height,
-			material
-		});
-
-		this.setImagesPosition();
-
-		this.scene.add(mesh);
-	}
-	//* -- end of IMAGES
 }
