@@ -1,4 +1,4 @@
-import type { PreviewSettings } from '$lib/types';
+import type { SceneSettings } from '$lib/types';
 import * as THREE from 'three';
 import vertex from '$lib/threejs/shaders/vertex.glsl?raw';
 import fragment from '$lib/threejs/shaders/fragment.glsl?raw';
@@ -12,7 +12,7 @@ import anime from 'animejs';
 interface Props {
 	container: HTMLDivElement;
 	images: HTMLImageElement[];
-	previewSettings: PreviewSettings;
+	sceneSettings: SceneSettings;
 }
 
 type MeshImage = {
@@ -33,12 +33,12 @@ type ScrollSpeed = {
 
 type MapMeshImages = Map<string, MeshImage>;
 
-export default class ThreePreview {
+export default class MacawScene {
 	readonly container: HTMLDivElement;
 	readonly images: HTMLImageElement[];
 	manualShouldRender: boolean;
 
-	private previewSettings: PreviewSettings;
+	private settings: SceneSettings;
 	private time: number;
 	private dimensions: { width: number; height: number };
 	private scrollSpeed: ScrollSpeed;
@@ -60,7 +60,7 @@ export default class ThreePreview {
 	constructor(options: Props) {
 		this.container = options.container;
 		this.images = options.images;
-		this.previewSettings = options.previewSettings;
+		this.settings = options.sceneSettings;
 
 		//* Default settings
 		this.currentScroll = window.scrollY || document.documentElement.scrollTop;
@@ -82,8 +82,8 @@ export default class ThreePreview {
 		};
 
 		this.scene = new THREE.Scene();
-		if (!this.previewSettings.options.alpha) {
-			this.scene.background = new THREE.Color(this.previewSettings.options.color);
+		if (!this.settings.options.alpha) {
+			this.scene.background = new THREE.Color(this.settings.options.color);
 		}
 
 		const near = 70;
@@ -102,12 +102,10 @@ export default class ThreePreview {
 
 		this.renderer = new THREE.WebGLRenderer({
 			powerPreference: 'high-performance',
-			alpha: this.previewSettings.options.alpha
+			alpha: this.settings.options.alpha
 		});
 
-		this.renderer.setPixelRatio(
-			Math.min(devicePixelRatio, this.previewSettings.options.maxDPR ?? 1.75)
-		);
+		this.renderer.setPixelRatio(Math.min(devicePixelRatio, this.settings.options.maxDPR ?? 1.75));
 		this.container.appendChild(this.renderer.domElement);
 
 		this.raycaster = new THREE.Raycaster();
@@ -139,22 +137,22 @@ export default class ThreePreview {
 	}
 
 	//* SETTER
-	set PreviewSettings(value: PreviewSettings) {
+	set Settings(sceneSettings: SceneSettings) {
 		this.manualShouldRender = false;
 
 		// TODO Change only changed 💁‍♂️
-		this.scene.background = new THREE.Color(value.options.color);
+		this.scene.background = new THREE.Color(sceneSettings.options.color);
 		// ? Maybe uncomment
 		// this.mapMeshImages.forEach((image) => (image.mesh.visible = true));
 
-		this.previewSettings = value;
+		this.settings = sceneSettings;
 		this.manualRender();
 	}
 	//* -- end of SETTER
 
 	//* GETTER
 	get PreviewSettings() {
-		return this.previewSettings;
+		return this.settings;
 	}
 	//* -- end of GETTER
 
@@ -239,8 +237,7 @@ export default class ThreePreview {
 
 	// TODO make it "readonly"
 	manualRender() {
-		const isShaderPass =
-			this.previewSettings.scroll.enable || this.previewSettings.scrollTop.enable;
+		const isShaderPass = this.settings.scroll.enable || this.settings.scrollTop.enable;
 
 		// ? Maybe set uniforms only if at least one effect is enabled from previewSettings 🧐
 		this.setUniforms({ image: true, shaderPass: isShaderPass });
@@ -259,7 +256,7 @@ export default class ThreePreview {
 		// TODO Add to resize, scroll
 
 		if (this.manualShouldRender) return true;
-		if (this.previewSettings.glitch.enable) return true;
+		if (this.settings.glitch.enable) return true;
 		return false;
 	}
 
@@ -267,7 +264,7 @@ export default class ThreePreview {
 	private render() {
 		this.time += 0.5;
 
-		if (this.previewSettings.scroll.enable) {
+		if (this.settings.scroll.enable) {
 			this.scrollSpeedRender();
 		}
 
@@ -295,7 +292,7 @@ export default class ThreePreview {
 		this.renderPass = new RenderPass(this.scene, this.camera);
 		this.composer.addPass(this.renderPass);
 
-		const { scroll, scrollTop } = this.previewSettings;
+		const { scroll, scrollTop } = this.settings;
 
 		const shaderEffect = {
 			uniforms: {
@@ -316,7 +313,7 @@ export default class ThreePreview {
 	//* -- end of COMPOSER
 
 	private setUniforms({ image = false, shaderPass = false }) {
-		const { glitch, waveClick, scroll, scrollTop } = this.previewSettings;
+		const { glitch, waveClick, scroll, scrollTop } = this.settings;
 
 		if (image) {
 			for (const material of this.materials) {
@@ -358,7 +355,7 @@ export default class ThreePreview {
 	}
 
 	private clickEvent(event: MouseEvent) {
-		if (this.previewSettings.waveClick.enable) {
+		if (this.settings.waveClick.enable) {
 			this.vector2.setX((event.clientX / window.innerWidth) * 2 - 1);
 			this.vector2.setY(-(event.clientY / window.innerHeight) * 2 + 1);
 
@@ -392,7 +389,7 @@ export default class ThreePreview {
 	}
 
 	private async addImage(image: HTMLImageElement, index: number) {
-		const { glitch, waveClick } = this.previewSettings;
+		const { glitch, waveClick } = this.settings;
 
 		const { top, left, width, height } = image.getBoundingClientRect();
 

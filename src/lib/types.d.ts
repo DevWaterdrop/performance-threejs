@@ -1,4 +1,4 @@
-export interface PreviewSettings {
+export interface SceneSettings {
 	options: {
 		alpha: boolean;
 		color: number;

@@ -1,24 +1,24 @@
 <script lang="ts">
-	import type { PreviewSettings } from '$lib/types';
+	import type { SceneSettings } from '$lib/types';
 	import { onMount } from 'svelte';
-	import ThreePreview from '$lib/threejs/preview';
+	import MacawScene from '$lib/threejs/scene';
 
 	export let images: HTMLImageElement[];
-	export let previewSettings: PreviewSettings;
+	export let sceneSettings: SceneSettings;
 
 	let container: HTMLDivElement;
-	let preview: ThreePreview;
+	let scene: MacawScene;
 
 	onMount(() => {
-		preview = new ThreePreview({ container, images, previewSettings });
+		scene = new MacawScene({ container, images, sceneSettings });
 
 		return () => {
-			preview.cleanUp();
+			scene.cleanUp();
 		};
 	});
 
-	$: if (preview) {
-		preview.PreviewSettings = previewSettings;
+	$: if (scene) {
+		scene.Settings = sceneSettings;
 	}
 </script>
 

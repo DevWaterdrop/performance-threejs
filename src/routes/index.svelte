@@ -22,7 +22,7 @@
 </script>
 
 <script lang="ts">
-	import type { PreviewSettings } from '$lib/types';
+	import type { SceneSettings } from '$lib/types';
 	import { onMount } from 'svelte';
 	import Footer from '$lib/components/Footer/Footer.svelte';
 	import Nav from '$lib/components/Nav/Nav.svelte';
@@ -34,7 +34,7 @@
 
 	let imagesElement: HTMLImageElement[] = [];
 	let imagesLoadStatus: boolean[] = [...Array(images.length)].fill(false);
-	let previewSettings: PreviewSettings = {
+	let sceneSettings: SceneSettings = {
 		options: {
 			alpha: false,
 			color: 0x000000
@@ -63,18 +63,18 @@
 		});
 	});
 
-	$: previewSettings.options.color = $isDarkMode ? 0x000000 : 0xffffff;
+	$: sceneSettings.options.color = $isDarkMode ? 0x000000 : 0xffffff;
 	$: isImagesLoaded = imagesLoadStatus.every(Boolean);
 </script>
 
 <svelte:head>
-	<title>Performance Threejs</title>
+	<title>Performance Threejs 🦜</title>
 </svelte:head>
 
 {#if isImagesLoaded}
-	<Preview images={imagesElement} {previewSettings} />
+	<Preview images={imagesElement} {sceneSettings} />
 {/if}
-<Sidebar bind:previewSettings {isImagesLoaded} />
+<Sidebar bind:sceneSettings {isImagesLoaded} />
 <div class="flex min-h-screen flex-col py-8 pl-24 pr-8 dark:text-white">
 	<Nav />
 	<div class="grid grid-cols-3 gap-4 2xl:grid-cols-5">

@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { PreviewSettings } from '$lib/types';
+	import type { SceneSettings } from '$lib/types';
 	import chevronSVG from '$lib/assets/icons/chevron.svg?raw';
 	import ThemeSwitch from '../ThemeSwitch/ThemeSwitch.svelte';
 	import EffectBlock from '../EffectBlock/EffectBlock.svelte';
 	import Input from '../Input/Input.svelte';
 
-	export let previewSettings: PreviewSettings;
+	export let sceneSettings: SceneSettings;
 	export let isImagesLoaded: boolean;
 
 	let opened = false;
@@ -31,38 +31,38 @@
 		<ThemeSwitch />
 		<EffectBlock
 			name="Scroll"
-			bind:enabled={previewSettings.scroll.enable}
+			bind:enabled={sceneSettings.scroll.enable}
 			{opened}
 			disabled={!isImagesLoaded}
 		/>
 		<EffectBlock
 			name="Wave scroll (top)"
-			bind:enabled={previewSettings.scrollTop.enable}
+			bind:enabled={sceneSettings.scrollTop.enable}
 			{opened}
 			disabled={!isImagesLoaded}
 		/>
 		<EffectBlock
 			name="Click wave"
-			bind:enabled={previewSettings.waveClick.enable}
+			bind:enabled={sceneSettings.waveClick.enable}
 			{opened}
 			disabled={!isImagesLoaded}
 		/>
 		<EffectBlock
 			name="Glitch"
-			bind:enabled={previewSettings.glitch.enable}
+			bind:enabled={sceneSettings.glitch.enable}
 			{opened}
 			disabled={!isImagesLoaded}
 		>
 			<svelte:fragment slot="content">
-				<Input name="glitch noiseIntensity" bind:value={previewSettings.glitch.noiseIntensity}
+				<Input name="glitch noiseIntensity" bind:value={sceneSettings.glitch.noiseIntensity}
 					>Noise</Input
 				>
-				<Input name="glitch offsetIntensity" bind:value={previewSettings.glitch.offsetIntensity}
+				<Input name="glitch offsetIntensity" bind:value={sceneSettings.glitch.offsetIntensity}
 					>Offset</Input
 				>
 				<Input
 					name="glitch colorOffsetIntensity"
-					bind:value={previewSettings.glitch.colorOffsetIntensity}>Color offset</Input
+					bind:value={sceneSettings.glitch.colorOffsetIntensity}>Color offset</Input
 				>
 			</svelte:fragment>
 		</EffectBlock>
