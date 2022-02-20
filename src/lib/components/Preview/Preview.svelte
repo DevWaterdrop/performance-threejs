@@ -1,8 +1,7 @@
 <script lang="ts">
-	import type { SceneSettings } from '$lib/types';
 	import { onMount } from 'svelte';
 	import { scene } from '$lib/stores';
-	import MacawScene from '$lib/threejs/scene';
+	import MacawScene, { SceneSettings } from '$lib/threejs/scene';
 	import MacawImage from '$lib/threejs/image';
 
 	export let images: HTMLImageElement[];
