@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { SceneSettings } from '$lib/types';
 	import { onMount } from 'svelte';
+	import { scene } from '$lib/stores';
 	import MacawScene from '$lib/threejs/scene';
 	import MacawImage from '$lib/threejs/image';
 
@@ -9,15 +10,14 @@
 	export let imagesLoadStatus: boolean[];
 
 	let container: HTMLDivElement;
-	let scene: MacawScene;
 
 	onMount(() => {
-		scene = new MacawScene({ container, sceneSettings });
+		scene.set(new MacawScene({ container, sceneSettings }));
 
 		const createImage = async (image: HTMLImageElement, index: number) => {
-			const img = new MacawImage({ scene });
+			const img = new MacawImage({ scene: $scene });
 			await img.create(image, String(index));
-			scene.Image = img;
+			$scene.Image = img;
 			imagesLoadStatus[index] = true;
 		};
 
@@ -27,13 +27,14 @@
 		});
 
 		return () => {
-			scene.cleanUp();
+			$scene.cleanUp();
 		};
 	});
 
-	$: if (scene) {
-		scene.Settings = sceneSettings;
+	$: if ($scene) {
+		$scene.Settings = sceneSettings;
 	}
 </script>
 
 <div class="fixed top-0 left-0 -z-10 h-screen w-screen" bind:this={container} />
+<div class="fixed top-6 right-6 z-50 flex  flex-col" />

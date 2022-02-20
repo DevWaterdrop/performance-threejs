@@ -1,9 +1,9 @@
-import type { SceneSettings } from '$lib/types';
 import * as THREE from 'three';
-import vertex from '$lib/threejs/shaders/vertex.glsl?raw';
-import fragment from '$lib/threejs/shaders/fragment.glsl?raw';
 import type MacawImage from './image';
 import MacawComposer from './composer';
+import type { GeneralEffect } from './effect';
+import MacawImageShader from './shaders/imageShader';
+import MacawComposerShader from './shaders/composerShader';
 
 interface Props {
 	container: HTMLDivElement;
@@ -16,7 +16,14 @@ type ScrollSpeed = {
 	render: number;
 };
 
+export type SceneSettings = {
+	alpha: boolean;
+	color: number;
+	maxDPR?: number;
+};
+
 type MapMeshImages = Map<string, MacawImage>;
+export type MapEffects = Map<string, GeneralEffect>;
 
 export default class MacawScene {
 	readonly container: HTMLDivElement;
@@ -26,7 +33,6 @@ export default class MacawScene {
 	private time: number;
 	private scrollSpeed: ScrollSpeed;
 	private scrollTimes: number;
-	private mapMeshImages: MapMeshImages;
 
 	// TODO WIP
 	readonly baseMaterial: THREE.ShaderMaterial;
@@ -34,7 +40,6 @@ export default class MacawScene {
 	readonly vector2: THREE.Vector2;
 	readonly camera: THREE.PerspectiveCamera;
 	readonly scene: THREE.Scene;
-	readonly materials: THREE.ShaderMaterial[];
 
 	observer: IntersectionObserver;
 	settings: SceneSettings;
@@ -48,6 +53,16 @@ export default class MacawScene {
 
 	private macawComposer: MacawComposer;
 	// TODO -- end of 2
+
+	// TODO WIP 3
+	readonly mapMeshImages: MapMeshImages;
+	readonly mapEffects: Map<string, GeneralEffect>;
+	readonly imageShader: MacawImageShader;
+	readonly composerShader: MacawComposerShader;
+	shaderEffect: Record<string, unknown>;
+	// TODO rename
+	isShaderPass: number;
+	// TODO -- end of 3
 
 	constructor(options: Props) {
 		this.container = options.container;
@@ -67,20 +82,22 @@ export default class MacawScene {
 		this.vector2 = new THREE.Vector2();
 
 		// TODO
-		const { glitch, waveClick } = this.settings;
+		this.mapEffects = new Map();
+
+		this.imageShader = new MacawImageShader();
+		this.composerShader = new MacawComposerShader();
+
 		this.baseMaterial = new THREE.ShaderMaterial({
-			uniforms: {
-				u_image: { value: 0 },
-				u_scale: { value: [1, 1] },
-				u_time: { value: 0 },
-				u_click: { value: 0 },
-				u_clickPosition: { value: [0.5, 0.5] }, // Center of Image
-				u_glitch: { value: glitch },
-				u_waveClick: { value: waveClick }
-			},
-			fragmentShader: fragment,
-			vertexShader: vertex
+			uniforms: this.imageShader.uniforms,
+			fragmentShader: this.imageShader.fragmentShader,
+			vertexShader: this.imageShader.vertexShader
 		});
+		this.shaderEffect = {
+			uniforms: this.composerShader.uniforms,
+			fragmentShader: this.composerShader.fragmentShader,
+			vertexShader: this.composerShader.vertexShader
+		};
+		this.isShaderPass = 0;
 		// TODO -- end
 
 		//* -- end of Default settings
@@ -91,8 +108,8 @@ export default class MacawScene {
 		};
 
 		this.scene = new THREE.Scene();
-		if (!this.settings.options.alpha) {
-			this.scene.background = new THREE.Color(this.settings.options.color);
+		if (!this.settings.alpha) {
+			this.scene.background = new THREE.Color(this.settings.color);
 		}
 
 		const near = 70;
@@ -111,10 +128,10 @@ export default class MacawScene {
 
 		this.renderer = new THREE.WebGLRenderer({
 			powerPreference: 'high-performance',
-			alpha: this.settings.options.alpha
+			alpha: this.settings.alpha
 		});
 
-		this.renderer.setPixelRatio(Math.min(devicePixelRatio, this.settings.options.maxDPR ?? 1.75));
+		this.renderer.setPixelRatio(Math.min(devicePixelRatio, this.settings.maxDPR ?? 1.75));
 		this.container.appendChild(this.renderer.domElement);
 
 		this.raycaster = new THREE.Raycaster();
@@ -127,12 +144,11 @@ export default class MacawScene {
 			camera: this.camera,
 			renderer: this.renderer,
 			dimensions: this.dimensions,
-			settings: this.settings
+			shaderEffect: this.shaderEffect
 		});
 		//* -- end of Composer
 
 		//* Image zone
-		this.materials = [];
 		this.mapMeshImages = new Map();
 		//* -- end of Image zone
 
@@ -148,12 +164,85 @@ export default class MacawScene {
 		this.manualRender();
 	}
 
+	// TODO Same code in removeEffect
+	addEffect(key: string, effect: GeneralEffect) {
+		if (this.mapEffects.has(key)) {
+			this.removeEffect(key);
+			return false;
+		}
+
+		effect.scene = this;
+		this.mapEffects.set(key, effect);
+
+		if (effect.composerFragmentString !== undefined) {
+			this.isShaderPass += 1;
+			this.composerShader.create(this.mapEffects);
+			this.macawComposer.refreshShaderPass(this.composerShader);
+		}
+		if (effect.imageFragmentString !== undefined) {
+			this.imageShader.create(this.mapEffects);
+			this.mapMeshImages.forEach((img) => img.refreshMaterial());
+		}
+
+		this.manualRender(); // TODO maybe remove
+
+		return true;
+	}
+
+	removeEffect(key: string) {
+		if (!this.mapEffects.has(key)) return false;
+
+		const effect = { ...this.mapEffects.get(key) };
+		this.mapEffects.delete(key);
+
+		if (effect.composerFragmentString !== undefined) {
+			this.isShaderPass -= 1;
+			this.composerShader.create(this.mapEffects);
+			this.macawComposer.refreshShaderPass(this.composerShader);
+		}
+		if (effect.imageFragmentString !== undefined) {
+			this.imageShader.create(this.mapEffects);
+			this.mapMeshImages.forEach((img) => img.refreshMaterial());
+		}
+
+		this.manualRender(); // TODO maybe remove
+
+		return true;
+	}
+
+	// TODO make it "readonly"
+	manualRender() {
+		// ? Maybe set uniforms only if at least one effect is enabled from previewSettings 🧐
+		this.setUniforms({ image: true, shaderPass: this.isShaderPass > 0 });
+
+		this.mapEffects.forEach((effect) => {
+			if (effect.manualRender) effect.manualRender();
+		});
+
+		// ? Find better performance solution
+		if (this.isShaderPass > 0) {
+			if (this.scrollTimes <= 1) this.renderer.render(this.scene, this.camera); //! Temporarily fix
+			this.macawComposer.composer.render();
+		} else {
+			this.renderer.render(this.scene, this.camera);
+		}
+	}
+	cleanUp() {
+		// TODO WIP
+		window.removeEventListener('resize', this.resize.bind(this));
+		window.removeEventListener('scroll', this.scroll.bind(this));
+		this.mapMeshImages.forEach((img) => {
+			img.cleanUp();
+		});
+		this.observer.disconnect();
+	}
+
 	//* SETTER
 	set Settings(sceneSettings: SceneSettings) {
 		this.manualShouldRender = false;
 
 		// TODO Change only changed 💁‍♂️
-		this.scene.background = new THREE.Color(sceneSettings.options.color);
+		this.scene.background = new THREE.Color(sceneSettings.color);
 		// ? Maybe uncomment
 		// this.mapMeshImages.forEach((image) => (image.mesh.visible = true));
 
@@ -168,12 +257,6 @@ export default class MacawScene {
 		this.manualRender();
 	}
 	//* -- end of SETTER
-
-	//* GETTER
-	get PreviewSettings() {
-		return this.settings;
-	}
-	//* -- end of GETTER
 
 	private setupResize() {
 		window.addEventListener('resize', this.resize.bind(this));
@@ -224,7 +307,12 @@ export default class MacawScene {
 		this.scrollTimes += 1;
 		//? Currently removed for better performance, it seems there is no need, and there are no bugs
 		//? UPDATE: Bugs on resize, WIP to remove it
-		// this.setImagesPosition();
+		// TODO performance => need to remove
+		this.setImagesPosition();
+
+		this.mapEffects.forEach((effect) => {
+			if (effect.scroll) effect.scroll();
+		});
 
 		if (!this.shouldRender()) {
 			this.manualRender();
@@ -245,24 +333,13 @@ export default class MacawScene {
 		this.macawComposer.composer.setSize(this.dimensions.width, this.dimensions.height);
 
 		this.setImagesPosition(true);
+
+		this.mapEffects.forEach((effect) => {
+			if (effect.resize) effect.resize();
+		});
+
 		if (!this.shouldRender()) {
 			this.manualRender();
-		}
-	}
-
-	// TODO make it "readonly"
-	manualRender() {
-		const isShaderPass = this.settings.scroll.enable || this.settings.scrollTop.enable;
-
-		// ? Maybe set uniforms only if at least one effect is enabled from previewSettings 🧐
-		this.setUniforms({ image: true, shaderPass: isShaderPass });
-
-		// ? Find better performance solution
-		if (isShaderPass) {
-			if (this.scrollTimes <= 1) this.renderer.render(this.scene, this.camera); //! Temporarily fix
-			this.macawComposer.composer.render();
-		} else {
-			this.renderer.render(this.scene, this.camera);
 		}
 	}
 
@@ -271,7 +348,7 @@ export default class MacawScene {
 		// TODO Add to resize, scroll
 
 		if (this.manualShouldRender) return true;
-		if (this.settings.glitch.enable) return true;
+		// if (this.settings.glitch.enable) return true; // TODO remove
 		return false;
 	}
 
@@ -279,7 +356,7 @@ export default class MacawScene {
 	private render() {
 		this.time += 0.5;
 
-		if (this.settings.scroll.enable) {
+		if (this.isShaderPass > 0) {
 			this.scrollSpeedRender();
 		}
 
@@ -290,31 +367,15 @@ export default class MacawScene {
 		window.requestAnimationFrame(this.render.bind(this));
 	}
 
-	cleanUp() {
-		// TODO WIP
-		window.removeEventListener('resize', this.resize.bind(this));
-		window.removeEventListener('scroll', this.scroll.bind(this));
-		this.mapMeshImages.forEach((img) => {
-			img.cleanUp();
-		});
-		this.observer.disconnect();
-	}
-
 	private setUniforms({ image = false, shaderPass = false }) {
-		const { glitch, waveClick, scroll, scrollTop } = this.settings;
-
 		if (image) {
-			for (const material of this.materials) {
+			this.mapMeshImages.forEach(({ material }) => {
 				material.uniforms.u_time.value = this.time;
-				material.uniforms.u_glitch.value = glitch;
-				material.uniforms.u_waveClick.value = waveClick;
-			}
+			});
 		}
 
 		if (shaderPass) {
 			this.macawComposer.shaderPass.uniforms.u_time.value = this.time;
-			this.macawComposer.shaderPass.uniforms.u_scroll.value = scroll;
-			this.macawComposer.shaderPass.uniforms.u_scrollTop.value = scrollTop;
 		}
 	}
 

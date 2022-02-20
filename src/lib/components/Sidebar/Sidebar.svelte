@@ -1,14 +1,28 @@
 <script lang="ts">
-	import type { SceneSettings } from '$lib/types';
+	import { scene } from '$lib/stores';
 	import chevronSVG from '$lib/assets/icons/chevron.svg?raw';
+	import ClickWave from '$lib/threejs/effects/click_wave';
+	import ScrollWrapUnder from '$lib/threejs/effects/scroll_wrap_under';
+	import ScrollWaveTop from '$lib/threejs/effects/scroll_wave_top';
 	import ThemeSwitch from '../ThemeSwitch/ThemeSwitch.svelte';
 	import EffectBlock from '../EffectBlock/EffectBlock.svelte';
-	import Input from '../Input/Input.svelte';
 
-	export let sceneSettings: SceneSettings;
 	export let isImagesLoaded: boolean;
+	export let isDev = false;
 
 	let opened = false;
+
+	let settings = {
+		scrollWrapUnder: {
+			enable: false
+		},
+		scrollWaveTop: {
+			enable: false
+		},
+		clickWave: {
+			enable: false
+		}
+	};
 
 	const handleClick = () => (opened = !opened);
 </script>
@@ -18,7 +32,7 @@
 	class="fixed top-0 left-0 z-10 flex h-screen w-16 flex-col items-center border-r-2 border-sidebar-border bg-sidebar-main p-2 text-white transition-all"
 	class:w-96={opened}
 >
-	<div
+	<button
 		class="absolute top-5 -right-[0.875rem] z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-sidebar-third text-2xl transition-transform"
 		class:translate-x-5={!opened}
 		on:click={handleClick}
@@ -26,46 +40,55 @@
 		<div class="svg" class:rotate-180={opened}>
 			{@html chevronSVG}
 		</div>
-	</div>
+	</button>
 	<div class="flex w-full flex-col gap-2">
 		<ThemeSwitch />
 		<EffectBlock
 			name="Scroll"
-			bind:enabled={sceneSettings.scroll.enable}
+			bind:enabled={settings.scrollWrapUnder.enable}
 			{opened}
 			disabled={!isImagesLoaded}
+			click={() =>
+				(settings.scrollWrapUnder.enable = $scene.addEffect(
+					'scrollWrapUnder',
+					new ScrollWrapUnder()
+				))}
 		/>
 		<EffectBlock
 			name="Wave scroll (top)"
-			bind:enabled={sceneSettings.scrollTop.enable}
+			bind:enabled={settings.scrollWaveTop.enable}
 			{opened}
 			disabled={!isImagesLoaded}
+			click={() =>
+				(settings.scrollWaveTop.enable = $scene.addEffect('scrollWaveTop', new ScrollWaveTop()))}
 		/>
 		<EffectBlock
 			name="Click wave"
-			bind:enabled={sceneSettings.waveClick.enable}
+			bind:enabled={settings.clickWave.enable}
 			{opened}
 			disabled={!isImagesLoaded}
+			click={() => (settings.clickWave.enable = $scene.addEffect('clickWave', new ClickWave()))}
 		/>
-		<EffectBlock
-			name="Glitch"
-			bind:enabled={sceneSettings.glitch.enable}
-			{opened}
-			disabled={!isImagesLoaded}
-		>
-			<svelte:fragment slot="content">
-				<Input name="glitch noiseIntensity" bind:value={sceneSettings.glitch.noiseIntensity}
-					>Noise</Input
+		{#if isDev}
+			<div class="flex w-full flex-col gap-2">
+				<button
+					class="overflow-hidden border p-2"
+					on:click={() => {
+						const { prettyFragment, prettyVertex } = $scene.imageShader.PrettyShaders;
+						console.log('🧪 ~ prettyVertex', prettyVertex);
+						console.log('🧪 ~ prettyFragment', prettyFragment);
+					}}>Image shaders</button
 				>
-				<Input name="glitch offsetIntensity" bind:value={sceneSettings.glitch.offsetIntensity}
-					>Offset</Input
+				<button
+					class="overflow-hidden border p-2"
+					on:click={() => {
+						const { prettyFragment, prettyVertex } = $scene.composerShader.PrettyShaders;
+						console.log('🧪 ~ prettyVertex', prettyVertex);
+						console.log('🧪 ~ prettyFragment', prettyFragment);
+					}}>Composer shaders</button
 				>
-				<Input
-					name="glitch colorOffsetIntensity"
-					bind:value={sceneSettings.glitch.colorOffsetIntensity}>Color offset</Input
-				>
-			</svelte:fragment>
-		</EffectBlock>
+			</div>
+		{/if}
 	</div>
 </div>
 

@@ -5,13 +5,16 @@
 	export let opened: boolean;
 	export let name: string;
 	export let disabled: boolean;
+	export let click: () => boolean;
 
 	let show = false;
 
 	const firstLetter = name.charAt(0);
 	const isContentSlot = $$slots.content;
 
-	const handleClick = () => (enabled = !enabled);
+	const handleClick = () => {
+		enabled = click();
+	};
 	const handleChevronClick = () => {
 		if (!disabled) return (show = !show);
 	};

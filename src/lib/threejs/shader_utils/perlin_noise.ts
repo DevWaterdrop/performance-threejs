@@ -1,3 +1,4 @@
+export const perlinNoise = /*glsl*/ `
 //	Classic Perlin 3D Noise 
 //	by Stefan Gustavson
 //
@@ -72,45 +73,4 @@ float cnoise(vec3 P){
   float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); 
   return 2.2 * n_xyz;
 }
-
-// Struct
-struct Scroll {
-	bool enable;
-};
-
-struct ScrollTop {
-	bool enable;
-};
-
-// Uniform
-uniform sampler2D tDiffuse;
-uniform float scrollSpeed;
-uniform Scroll u_scroll;
-uniform ScrollTop u_scrollTop;
-uniform float u_time;
-
-// Varying
-varying vec2 vUv;
-
-void main(){
-  vec2 newUV = vUv;
-
-  if(u_scroll.enable){
-    float area = smoothstep(0.4,0.,vUv.y);
-    area = pow(area,4.);
-
-    newUV.x -= (vUv.x - 0.5)*0.1*area*scrollSpeed;
-  }
-
-  if(u_scrollTop.enable){
-    float area = smoothstep(1.,0.8,vUv.y)*2.-1.;
-    float preNoise = 0.5*(cnoise(vec3(vUv*5.,u_time*0.075))+1.);
-    float noise = smoothstep(0.5,0.51,preNoise+area);
-
-    gl_FragColor = mix(vec4(0.),texture2D(tDiffuse, newUV),noise);
-    return;
-  }
-
-  gl_FragColor = texture2D(tDiffuse, newUV);
-  // gl_FragColor = vec4(area,0.,0.,1.); // Uncomment for debug
-}
+`;

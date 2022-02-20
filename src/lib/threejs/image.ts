@@ -1,4 +1,3 @@
-import anime from 'animejs';
 import * as THREE from 'three';
 import type MacawScene from './scene';
 
@@ -16,6 +15,7 @@ export default class MacawImage {
 	width: number;
 	height: number;
 	material: THREE.ShaderMaterial;
+	texture: THREE.Texture;
 
 	constructor(options: Props) {
 		this.scene = options.scene;
@@ -47,36 +47,44 @@ export default class MacawImage {
 		this.mesh.updateMatrix();
 	}
 
-	private clickEvent(event: MouseEvent) {
-		const { settings, vector2, raycaster, camera, scene } = this.scene;
+	refreshMaterial() {
+		// TODO WIP
+		const { imageShader } = this.scene;
+		const shaderMaterial = new THREE.ShaderMaterial({
+			uniforms: imageShader.uniforms,
+			fragmentShader: imageShader.fragmentShader,
+			vertexShader: imageShader.vertexShader
+		});
 
-		if (settings.waveClick.enable) {
-			vector2.setX((event.clientX / window.innerWidth) * 2 - 1);
-			vector2.setY(-(event.clientY / window.innerHeight) * 2 + 1);
+		const newMaterial = shaderMaterial.clone();
+		newMaterial.uniforms.u_image.value = this.texture;
 
-			raycaster.setFromCamera(vector2, camera);
-			const intersects = raycaster.intersectObjects(scene.children);
+		this.material = newMaterial;
 
-			if (intersects.length > 0) {
-				this.material.uniforms.u_clickPosition.value = intersects[0].uv;
-
-				this.scene.manualShouldRender = true;
-				this.scene.clickRender += 1;
-
-				anime({
-					targets: this.material.uniforms.u_click,
-					easing: 'easeOutQuart',
-					value: [1, 0]
-				}).finished.then(() => {
-					if (this.material.uniforms.u_click.value === 0) {
-						this.scene.clickRender -= 1;
-						if (this.scene.clickRender === 0) {
-							this.scene.manualShouldRender = false;
-						}
-					}
-				});
-			}
+		if (this.mesh.material instanceof Array) {
+			this.mesh.material.map((material) => material.dispose());
+		} else {
+			this.mesh.material.dispose();
 		}
+
+		this.mesh.material = newMaterial;
+
+		// img.material.needsUpdate = true; // ? Maybe uncomment
+	}
+
+	private clickEvent(event: MouseEvent) {
+		const { vector2, raycaster, camera, scene, mapEffects } = this.scene;
+
+		vector2.setX((event.clientX / window.innerWidth) * 2 - 1);
+		vector2.setY(-(event.clientY / window.innerHeight) * 2 + 1);
+
+		raycaster.setFromCamera(vector2, camera);
+		const intersects = raycaster.intersectObjects(scene.children);
+
+		// TODO Maybe split effects on click/scroll/etc...
+		mapEffects.forEach((effect) => {
+			if (effect.click) effect.click(this.element.id, intersects);
+		});
 	}
 
 	async create(image: HTMLImageElement, id: string) {
@@ -88,10 +96,10 @@ export default class MacawImage {
 			const texture = new THREE.Texture();
 			texture.needsUpdate = true;
 		*/
-		const texture = await new THREE.TextureLoader().loadAsync(image.src);
+		this.texture = await new THREE.TextureLoader().loadAsync(image.src);
 
 		const material = this.scene.baseMaterial.clone();
-		material.uniforms.u_image.value = texture;
+		material.uniforms.u_image.value = this.texture;
 
 		const mesh = new THREE.Mesh(geometry, material);
 
@@ -100,8 +108,6 @@ export default class MacawImage {
 		// --- end of Events
 
 		mesh.matrixAutoUpdate = false;
-
-		this.scene.materials.push(material);
 
 		// TODO WIP ? Performance
 		image.id = image.id ? image.id : `threejs_img_${id}`;
