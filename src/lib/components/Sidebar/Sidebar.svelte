@@ -6,12 +6,12 @@
 	import ScrollWaveTop from '$lib/threejs/effects/scroll_wave_top';
 	import ThemeSwitch from '../ThemeSwitch/ThemeSwitch.svelte';
 	import EffectBlock from '../EffectBlock/EffectBlock.svelte';
+	import Input from '../Input/Input.svelte';
 
 	export let isImagesLoaded: boolean;
 	export let isDev = false;
 
 	let opened = false;
-
 	let settings = {
 		scrollWrapUnder: {
 			enable: false
@@ -20,8 +20,17 @@
 			enable: false
 		},
 		clickWave: {
-			enable: false
+			enable: false,
+			settings: {
+				strength: 10.0
+			}
 		}
+	};
+
+	const effects = {
+		scrollWrapUnder: new ScrollWrapUnder(),
+		scrollWaveTop: new ScrollWaveTop(),
+		clickWave: new ClickWave(settings.clickWave.settings)
 	};
 
 	const handleClick = () => (opened = !opened);
@@ -51,7 +60,7 @@
 			click={() =>
 				(settings.scrollWrapUnder.enable = $scene.addEffect(
 					'scrollWrapUnder',
-					new ScrollWrapUnder()
+					effects.scrollWrapUnder
 				))}
 		/>
 		<EffectBlock
@@ -60,15 +69,25 @@
 			{opened}
 			disabled={!isImagesLoaded}
 			click={() =>
-				(settings.scrollWaveTop.enable = $scene.addEffect('scrollWaveTop', new ScrollWaveTop()))}
+				(settings.scrollWaveTop.enable = $scene.addEffect('scrollWaveTop', effects.scrollWaveTop))}
 		/>
 		<EffectBlock
 			name="Click wave"
 			bind:enabled={settings.clickWave.enable}
 			{opened}
 			disabled={!isImagesLoaded}
-			click={() => (settings.clickWave.enable = $scene.addEffect('clickWave', new ClickWave()))}
-		/>
+			click={() => (settings.clickWave.enable = $scene.addEffect('clickWave', effects.clickWave))}
+		>
+			<svelte:fragment slot="content">
+				<Input
+					name="ClickWave strength"
+					trigger={() => {
+						effects.clickWave.setSettings(settings.clickWave.settings);
+					}}
+					bind:value={settings.clickWave.settings.strength}>Strength</Input
+				>
+			</svelte:fragment>
+		</EffectBlock>
 		{#if isDev}
 			<div class="flex w-full flex-col gap-2">
 				<button

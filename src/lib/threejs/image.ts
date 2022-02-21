@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { Uniform } from './effect';
 import type MacawScene from './scene';
 
 interface Props {
@@ -47,11 +48,11 @@ export default class MacawImage {
 		this.mesh.updateMatrix();
 	}
 
-	refreshMaterial() {
+	refreshMaterial(additionalUniforms: Uniform = {}) {
 		// TODO WIP
 		const { imageShader } = this.scene;
 		const shaderMaterial = new THREE.ShaderMaterial({
-			uniforms: imageShader.uniforms,
+			uniforms: { ...additionalUniforms, ...imageShader.uniforms },
 			fragmentShader: imageShader.fragmentShader,
 			vertexShader: imageShader.vertexShader
 		});

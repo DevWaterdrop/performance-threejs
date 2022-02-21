@@ -177,11 +177,13 @@ export default class MacawScene {
 		if (effect.composerFragmentString !== undefined) {
 			this.isShaderPass += 1;
 			this.composerShader.create(this.mapEffects);
-			this.macawComposer.refreshShaderPass(this.composerShader);
+			this.macawComposer.refreshShaderPass(this.composerShader, effect.composerUniforms);
 		}
 		if (effect.imageFragmentString !== undefined) {
 			this.imageShader.create(this.mapEffects);
-			this.mapMeshImages.forEach((img) => img.refreshMaterial());
+			this.mapMeshImages.forEach((img) => {
+				img.refreshMaterial(effect.imageUniforms);
+			});
 		}
 
 		this.manualRender(); // TODO maybe remove

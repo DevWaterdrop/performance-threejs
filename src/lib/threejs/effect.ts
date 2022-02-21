@@ -1,3 +1,4 @@
+import type MacawImage from './image';
 import type MacawScene from './scene';
 
 // ! WIP WIP WIP WIP
@@ -72,7 +73,7 @@ export abstract class EffectImageUniforms extends Effect {
 	readonly imageVertexString: VertexString;
 	readonly imageUniforms: Uniform;
 
-	abstract setImageUniforms?(): void | unknown;
+	abstract setImageUniforms?(img: MacawImage): void | unknown;
 }
 
 export abstract class EffectComposerUniforms extends Effect {

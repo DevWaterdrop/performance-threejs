@@ -1,6 +1,7 @@
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import type { Uniform } from './effect';
 import type MacawComposerShader from './shaders/composerShader';
 
 interface Props {
@@ -29,12 +30,16 @@ export default class MacawComposer {
 		this.composer.addPass(this.shaderPass);
 	}
 
-	refreshShaderPass(shader: MacawComposerShader) {
+	refreshShaderPass(shader: MacawComposerShader, additionalUniforms: Uniform = {}) {
 		// TODO WIP Refactor
 		const { uniforms, vertexShader, fragmentShader } = shader;
 
 		this.composer.removePass(this.shaderPass);
-		this.shaderPass = new ShaderPass({ uniforms, vertexShader, fragmentShader });
+		this.shaderPass = new ShaderPass({
+			uniforms: { ...additionalUniforms, ...uniforms },
+			vertexShader,
+			fragmentShader
+		});
 		this.shaderPass.renderToScreen = true;
 		this.composer.addPass(this.shaderPass);
 	}
