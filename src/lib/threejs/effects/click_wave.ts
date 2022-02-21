@@ -20,7 +20,7 @@ export default class ClickWave
 	readonly imageFragmentString: FragmentString;
 	readonly imageVertexString: VertexString;
 	readonly imageUniforms: Uniform;
-	settings: Settings;
+	declare settings: Settings;
 
 	constructor(options: Settings) {
 		super();
