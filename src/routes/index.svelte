@@ -28,21 +28,23 @@
 	import Preview from '$lib/components/Preview/Preview.svelte';
 	import Sidebar from '$lib/components/Sidebar/Sidebar.svelte';
 	import { isDarkMode } from '$lib/stores';
-	import type { SceneSettings } from '$lib/threejs/scene';
+	// TODO Refactor to SceneSettings
+	import type { MacawScene } from 'macaw-threejs';
 
 	export let images: { id: string; src: string }[];
 	export let isDev = false;
 
 	let imagesElement: HTMLImageElement[] = [];
 	let imagesLoadStatus: boolean[] = [...Array(images.length)].fill(false);
-	let sceneSettings: SceneSettings = {
+
+	// TODO Refactor to SceneSettings
+	let sceneSettings: MacawScene['settings'] = {
 		alpha: false,
 		color: 0x000000
 	};
 
 	$: sceneSettings.color = $isDarkMode ? 0x000000 : 0xffffff;
-	// TODO Rename
-	$: isImagesLoaded = imagesLoadStatus.some(Boolean);
+	$: isAnyImageLoaded = imagesLoadStatus.some(Boolean);
 </script>
 
 <svelte:head>
@@ -50,7 +52,7 @@
 </svelte:head>
 
 <Preview images={imagesElement} {sceneSettings} bind:imagesLoadStatus />
-<Sidebar {isImagesLoaded} {isDev} />
+<Sidebar {isAnyImageLoaded} {isDev} />
 <div class="flex min-h-screen flex-col py-8 pl-24 pr-8 dark:text-white">
 	<Nav />
 	<div class="grid grid-cols-3 gap-4 2xl:grid-cols-5">

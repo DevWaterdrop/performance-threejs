@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { scene } from '$lib/stores';
-	import MacawScene, { SceneSettings } from '$lib/threejs/scene';
-	import MacawImage from '$lib/threejs/image';
+	import { MacawScene, MacawImage } from 'macaw-threejs';
 
 	export let images: HTMLImageElement[];
-	export let sceneSettings: SceneSettings;
+	// TODO Refactor to SceneSettings
+	export let sceneSettings: MacawScene['settings'];
 	export let imagesLoadStatus: boolean[];
 
 	let container: HTMLDivElement;
@@ -14,8 +14,8 @@
 		scene.set(new MacawScene({ container, sceneSettings }));
 
 		const createImage = async (image: HTMLImageElement, index: number) => {
-			const img = new MacawImage({ scene: $scene });
-			await img.create(image, String(index));
+			const img = new MacawImage({ element: image, scene: $scene, id: String(index) });
+			await img.create();
 			$scene.Image = img;
 			imagesLoadStatus[index] = true;
 		};

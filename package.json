@@ -37,6 +37,7 @@
 	"type": "module",
 	"dependencies": {
 		"animejs": "^3.2.1",
+		"macaw-threejs": "^0.0.1-c",
 		"three": "^0.137.4"
 	}
 }

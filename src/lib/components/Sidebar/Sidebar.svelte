@@ -1,17 +1,16 @@
 <script lang="ts">
 	import { scene } from '$lib/stores';
 	import chevronSVG from '$lib/assets/icons/chevron.svg?raw';
-	import ClickWave from '$lib/threejs/effects/click_wave';
-	import ScrollWrapUnder from '$lib/threejs/effects/scroll_wrap_under';
-	import ScrollWaveTop from '$lib/threejs/effects/scroll_wave_top';
+	import { ClickWave, ScrollWrapUnder, ScrollWaveTop } from 'macaw-threejs';
 	import ThemeSwitch from '../ThemeSwitch/ThemeSwitch.svelte';
 	import EffectBlock from '../EffectBlock/EffectBlock.svelte';
 	import Input from '../Input/Input.svelte';
 
-	export let isImagesLoaded: boolean;
+	export let isAnyImageLoaded: boolean;
 	export let isDev = false;
 
 	let opened = false;
+
 	let settings = {
 		scrollWrapUnder: {
 			enable: false
@@ -26,6 +25,8 @@
 			}
 		}
 	};
+
+	$: disabled = !isAnyImageLoaded;
 
 	const effects = {
 		scrollWrapUnder: new ScrollWrapUnder(),
@@ -56,7 +57,7 @@
 			name="Scroll"
 			bind:enabled={settings.scrollWrapUnder.enable}
 			{opened}
-			disabled={!isImagesLoaded}
+			{disabled}
 			click={() =>
 				(settings.scrollWrapUnder.enable = $scene.addEffect(
 					'scrollWrapUnder',
@@ -67,7 +68,7 @@
 			name="Wave scroll (top)"
 			bind:enabled={settings.scrollWaveTop.enable}
 			{opened}
-			disabled={!isImagesLoaded}
+			{disabled}
 			click={() =>
 				(settings.scrollWaveTop.enable = $scene.addEffect('scrollWaveTop', effects.scrollWaveTop))}
 		/>
@@ -75,7 +76,7 @@
 			name="Click wave"
 			bind:enabled={settings.clickWave.enable}
 			{opened}
-			disabled={!isImagesLoaded}
+			{disabled}
 			click={() => (settings.clickWave.enable = $scene.addEffect('clickWave', effects.clickWave))}
 		>
 			<svelte:fragment slot="content">
