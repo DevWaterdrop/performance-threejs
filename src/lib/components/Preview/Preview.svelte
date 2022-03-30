@@ -4,6 +4,8 @@
 	import { MacawScene, MacawImage } from 'macaw-threejs';
 
 	export let images: HTMLImageElement[];
+	// TODO Refactor to Type
+	export let sceneType: MacawScene['type'];
 	// TODO Refactor to SceneSettings
 	export let sceneSettings: MacawScene['settings'];
 	export let imagesLoadStatus: boolean[];
@@ -11,7 +13,7 @@
 	let container: HTMLDivElement;
 
 	onMount(() => {
-		scene.set(new MacawScene({ container, sceneSettings }));
+		scene.set(new MacawScene({ container, sceneSettings, type: sceneType }));
 
 		const createImage = async (image: HTMLImageElement, index: number) => {
 			const img = new MacawImage({ element: image, scene: $scene, id: String(index) });
@@ -35,5 +37,9 @@
 	}
 </script>
 
-<div class="fixed top-0 left-0 -z-10 h-screen w-screen" bind:this={container} />
-<div class="fixed top-6 right-6 z-50 flex  flex-col" />
+<div
+	class="{sceneType} top-0 left-0 -z-10 {sceneType === 'absolute'
+		? 'h-full w-full'
+		: 'h-screen w-screen'} "
+	bind:this={container}
+/>
