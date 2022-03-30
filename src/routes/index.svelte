@@ -4,6 +4,7 @@
 
 		const limit = searchParams.get('limit') || 20;
 		const size = searchParams.get('size') || 500;
+		const sceneType = searchParams.get('type') || 'fixed';
 		const isDev = searchParams.get('dev') !== null;
 
 		const response = await fetch(`${href}/v2/list?page=2&limit=${limit}`);
@@ -17,7 +18,7 @@
 
 		return {
 			status: response.status,
-			props: { images: imagesWithSrc, isDev }
+			props: { images: imagesWithSrc, isDev, sceneType }
 		};
 	};
 </script>
@@ -33,6 +34,8 @@
 
 	export let images: { id: string; src: string }[];
 	export let isDev = false;
+	// TODO Refactor to Type
+	export let sceneType: MacawScene['type'];
 
 	let imagesElement: HTMLImageElement[] = [];
 	let imagesLoadStatus: boolean[] = [...Array(images.length)].fill(false);
@@ -51,7 +54,7 @@
 	<title>Performance Threejs 🦜</title>
 </svelte:head>
 
-<Preview images={imagesElement} {sceneSettings} bind:imagesLoadStatus />
+<Preview {sceneType} images={imagesElement} {sceneSettings} bind:imagesLoadStatus />
 <Sidebar {isAnyImageLoaded} {isDev} />
 <div class="flex min-h-screen flex-col py-8 pl-24 pr-8 dark:text-white">
 	<Nav />
