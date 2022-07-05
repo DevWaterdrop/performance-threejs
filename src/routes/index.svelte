@@ -29,36 +29,30 @@
 	import Preview from '$lib/components/Preview/Preview.svelte';
 	import Sidebar from '$lib/components/Sidebar/Sidebar.svelte';
 	import { isDarkMode } from '$lib/stores';
-	// TODO Refactor to SceneSettings
-	import type { MacawScene } from 'macaw-threejs';
+	import type { CONSTANTS } from 'macaw-threejs';
 
 	export let images: { id: string; src: string }[];
 	export let isDev = false;
-	// TODO Refactor to Type
-	export let sceneType: MacawScene['type'];
+	export let sceneType: CONSTANTS.SCENE_TYPE;
 
 	let imagesElement: HTMLImageElement[] = [];
 	let imagesLoadStatus: boolean[] = [...Array(images.length)].fill(false);
 
-	// TODO Refactor to SceneSettings
-	let sceneSettings: MacawScene['settings'] = {
+	let sceneSettings = {
 		alpha: false,
-		color: 0x000000
+		color: 0x000000,
+		type: sceneType
 	};
 
 	$: sceneSettings.color = $isDarkMode ? 0x000000 : 0xffffff;
 	$: isAnyImageLoaded = imagesLoadStatus.some(Boolean);
 </script>
 
-<svelte:head>
-	<title>Performance Threejs 🦜</title>
-</svelte:head>
-
-<Preview {sceneType} images={imagesElement} {sceneSettings} bind:imagesLoadStatus />
+<Preview images={imagesElement} {sceneSettings} bind:imagesLoadStatus />
 <Sidebar {isAnyImageLoaded} {isDev} />
-<div class="flex min-h-screen flex-col py-8 pl-24 pr-8 dark:text-white">
+<div class="flex min-h-screen flex-col py-8 pr-8 pl-24 dark:text-white">
 	<Nav />
-	<div class="grid grid-cols-3 gap-4 2xl:grid-cols-5">
+	<section class="grid grid-cols-3 gap-4 2xl:grid-cols-5">
 		{#each images as image, index (image.id)}
 			<img
 				bind:this={imagesElement[index]}
@@ -70,6 +64,6 @@
 				crossorigin="anonymous"
 			/>
 		{/each}
-	</div>
+	</section>
 	<Footer />
 </div>

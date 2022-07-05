@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { scene } from '$lib/stores';
+	import { macaw } from '$lib/stores';
 	import chevronSVG from '$lib/assets/icons/chevron.svg?raw';
-	import { ClickWave, ScrollWrapUnder, ScrollWaveTop } from 'macaw-threejs';
+	import { ClickWave, ScrollWaveTop, ScrollWrapUnder } from 'macaw-threejs/effects';
 	import ThemeSwitch from '../ThemeSwitch/ThemeSwitch.svelte';
 	import EffectBlock from '../EffectBlock/EffectBlock.svelte';
 	import Input from '../Input/Input.svelte';
@@ -38,7 +38,7 @@
 </script>
 
 <!-- Inspired by https://dribbble.com/shots/16451584-Minimal-sidebar-navigation-for-dashboard -->
-<div
+<aside
 	class="fixed top-0 left-0 z-10 flex h-screen w-16 flex-col items-center border-r-2 border-sidebar-border bg-sidebar-main p-2 text-white transition-all"
 	class:w-96={opened}
 >
@@ -59,10 +59,10 @@
 			{opened}
 			{disabled}
 			click={() =>
-				(settings.scrollWrapUnder.enable = $scene.addEffect(
-					'scrollWrapUnder',
-					effects.scrollWrapUnder
-				))}
+				(settings.scrollWrapUnder.enable = $macaw.addEffect({
+					key: 'scrollWrapUnder',
+					effect: effects.scrollWrapUnder
+				}))}
 		/>
 		<EffectBlock
 			name="Wave scroll (top)"
@@ -70,14 +70,21 @@
 			{opened}
 			{disabled}
 			click={() =>
-				(settings.scrollWaveTop.enable = $scene.addEffect('scrollWaveTop', effects.scrollWaveTop))}
+				(settings.scrollWaveTop.enable = $macaw.addEffect({
+					key: 'scrollWaveTop',
+					effect: effects.scrollWaveTop
+				}))}
 		/>
 		<EffectBlock
 			name="Click wave"
 			bind:enabled={settings.clickWave.enable}
 			{opened}
 			{disabled}
-			click={() => (settings.clickWave.enable = $scene.addEffect('clickWave', effects.clickWave))}
+			click={() =>
+				(settings.clickWave.enable = $macaw.addEffect({
+					key: 'clickWave',
+					effect: effects.clickWave
+				}))}
 		>
 			<svelte:fragment slot="content">
 				<Input
@@ -94,7 +101,8 @@
 				<button
 					class="overflow-hidden border p-2"
 					on:click={() => {
-						const { prettyFragment, prettyVertex } = $scene.imageShader.PrettyShaders;
+						const { prettyFragment, prettyVertex } =
+							$macaw.controllers.shader.image.shader.PrettyShaders;
 						console.log('🧪 ~ prettyVertex', prettyVertex);
 						console.log('🧪 ~ prettyFragment', prettyFragment);
 					}}>Image shaders</button
@@ -102,7 +110,8 @@
 				<button
 					class="overflow-hidden border p-2"
 					on:click={() => {
-						const { prettyFragment, prettyVertex } = $scene.composerShader.PrettyShaders;
+						const { prettyFragment, prettyVertex } =
+							$macaw.controllers.shader.composer.shader.PrettyShaders;
 						console.log('🧪 ~ prettyVertex', prettyVertex);
 						console.log('🧪 ~ prettyFragment', prettyFragment);
 					}}>Composer shaders</button
@@ -110,7 +119,7 @@
 			</div>
 		{/if}
 	</div>
-</div>
+</aside>
 
 <style lang="postcss">
 	.svg > :global(svg) {

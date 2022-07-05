@@ -4,7 +4,11 @@
 	import { isDarkMode } from '$lib/stores';
 
 	$: if (global.window) {
-		isDarkMode.set(document.querySelector('html').classList.contains('dark'));
+		const htmlElement = document.querySelector('html');
+
+		if (htmlElement) {
+			isDarkMode.set(htmlElement.classList.contains('dark'));
+		}
 	}
 
 	const handleClick = () => {

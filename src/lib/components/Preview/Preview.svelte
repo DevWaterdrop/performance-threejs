@@ -1,24 +1,19 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { scene } from '$lib/stores';
-	import { MacawScene, MacawImage } from 'macaw-threejs';
+	import { macaw } from '$lib/stores';
+	import { MacawCore, MacawImage } from 'macaw-threejs';
 
 	export let images: HTMLImageElement[];
-	// TODO Refactor to Type
-	export let sceneType: MacawScene['type'];
-	// TODO Refactor to SceneSettings
-	export let sceneSettings: MacawScene['settings'];
+	export let sceneSettings: Partial<MacawCore['scene']['settings']>;
 	export let imagesLoadStatus: boolean[];
 
 	let container: HTMLDivElement;
 
 	onMount(() => {
-		scene.set(new MacawScene({ container, sceneSettings, type: sceneType }));
+		macaw.set(new MacawCore({ container, sceneSettings }));
 
 		const createImage = async (image: HTMLImageElement, index: number) => {
-			const img = new MacawImage({ element: image, scene: $scene, id: String(index) });
-			await img.create();
-			$scene.Image = img;
+			await new MacawImage({ element: image, core: $macaw, id: String(index) }).create();
 			imagesLoadStatus[index] = true;
 		};
 
@@ -28,18 +23,19 @@
 		});
 
 		return () => {
-			$scene.cleanUp();
+			$macaw.cleanUp();
 		};
 	});
 
-	$: if ($scene) {
-		$scene.Settings = sceneSettings;
+	$: if ($macaw) {
+		$macaw.scene.setSettings(sceneSettings);
 	}
 </script>
 
 <div
-	class="{sceneType} top-0 left-0 -z-10 {sceneType === 'absolute'
+	class="{sceneSettings.type} top-0 left-0 -z-10 {sceneSettings.type === 'absolute'
 		? 'h-full w-full'
 		: 'h-screen w-screen'} "
+	aria-hidden="true"
 	bind:this={container}
 />
