@@ -1,6 +1,6 @@
 # Preview
 
-[Link](https://performance-threejs.vercel.app/ 'Link to preview')
+[Link](https://performance-threejs.waterdrop.dev/ 'Link to preview')
 
 # Assets
 
