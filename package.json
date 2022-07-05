@@ -34,6 +34,6 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"macaw-threejs": "^0.2.0"
+		"macaw-threejs": "^0.2.1"
 	}
 }

@@ -1,6 +1,4 @@
-# Preview
-
-[Link](https://performance-threejs.waterdrop.dev/ 'Link to preview')
+# [Preview](https://performance-threejs.waterdrop.dev/ 'Link to preview')
 
 # Assets
 
